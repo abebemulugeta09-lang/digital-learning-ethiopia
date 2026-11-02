@@ -1,0 +1,9 @@
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
+const resources = {
+  am: { translation: { brand:'ዲጂታል ትምህርት ኢትዮጵያ', home:'መነሻ', courses:'ኮርሶች', library:'ዲጂታል ቤተ-መጻሕፍት', exams:'ፈተናዎች', certificates:'ሰርተፍኬቶች', hero:'ትምህርትን በዲጂታል መንገድ ለሁሉም', sub:'በማንኛውም ቦታና ጊዜ የመማር እድል', explore:'ኮርሶችን ይመልከቱ', featured:'የተመረጡ ኮርሶች', digital:'ዲጂታል ክህሎቶች', leadership:'አመራርና ቡድን ሥራ', languages:'ቋንቋዎች', professional:'ሙያዊ እድገት', planned:'የመጀመሪያ ስሪት — የማሳያ ይዘት', footer:'የትምህርት እድልን በቴክኖሎጂ ማስፋት' } },
+  om: { translation: { brand:'Barnoota Dijitaalaa Itoophiyaa', home:'Mana', courses:'Koorsiiwwan', library:'Mana Kitaabaa Dijitaalaa', exams:'Qormaata', certificates:'Ragaa', hero:'Barnoota dijitaalaa nama hundaaf', sub:'Carraa barachuu bakkaafi yeroo kamittuu', explore:'Koorsii ilaali', featured:'Koorsii filataman', digital:'Dandeettii Dijitaalaa', leadership:'Hoggansaafi Hojii Garee', languages:'Afaanota', professional:'Guddina Ogummaa', planned:'Gosa jalqabaa — qabiyyee agarsiisaa', footer:'Teeknooloojiin carraa barnootaa babal’isuu' } },
+  en: { translation: { brand:'Digital Learning Ethiopia', home:'Home', courses:'Courses', library:'Digital Library', exams:'Exams', certificates:'Certificates', hero:'Digital learning opportunities for everyone', sub:'Learn anywhere, at any time', explore:'Explore courses', featured:'Featured courses', digital:'Digital Skills', leadership:'Leadership & Teamwork', languages:'Languages', professional:'Professional Development', planned:'Starter version — demonstration content', footer:'Expanding learning opportunities through technology' } }
+}
+i18n.use(initReactI18next).init({resources, lng:'am', fallbackLng:'en', interpolation:{escapeValue:false}})
+export default i18n
