@@ -1,15 +1,147 @@
-body {
-  margin: 0;
-  background: #f3f6fb;
-  color: #172554;
-  font-family: Arial, sans-serif;
+* {
+  box-sizing: border-box;
 }
 
-main {
-  max-width: 800px;
-  margin: 60px auto;
-  padding: 30px;
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  color: #172554;
+}
+
+.header {
+  background: #123b70;
+  color: white;
+  padding: 15px 6%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.language select {
+  padding: 9px;
+  border-radius: 7px;
+}
+
+.main {
+  max-width: 850px;
+  margin: auto;
+  padding: 25px 15px;
+}
+
+.welcome {
+  text-align: center;
+  padding: 25px 10px;
+}
+
+.logo {
+  font-size: 55px;
+}
+
+.welcome h1 {
+  color: #123b70;
+  font-size: 28px;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.nav span {
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.form-card {
+  max-width: 460px;
+  margin: 25px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 5px 20px rgba(0,0,0,.08);
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #e2e8f0;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: #123b70;
+  color: white;
+}
+
+.form-card h2 {
+  text-align: center;
+  margin: 25px 0;
+}
+
+form label {
+  display: block;
+  margin-bottom: 17px;
+  font-weight: bold;
+}
+
+form input {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  margin-top: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 16px;
+}
+
+.submit {
+  width: 100%;
+  padding: 14px;
+  background: #147d50;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.switch {
+  text-align: center;
+  color: #145ca8;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #64748b;
+}
+
+@media (max-width: 500px) {
+  .welcome h1 {
+    font-size: 22px;
+  }
+
+  .form-card {
+    padding: 18px;
+  }
 }
