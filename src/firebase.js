@@ -1,8 +1,9 @@
+
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-// Firebase web configuration for the Digital Learning Ethiopia project.
-// Do not place service-account private keys or admin credentials in this file.
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDvv0Yu7pq7iNeh1tzoLKU_VAvoFJQMdbc",
   authDomain: "digital-learning-ethiopia.firebaseapp.com",
@@ -13,5 +14,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
+export const db = getFirestore(app);
+
 export default app;
