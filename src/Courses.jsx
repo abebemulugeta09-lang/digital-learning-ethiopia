@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   collection,
   addDoc,
@@ -7,74 +8,105 @@ import {
   doc,
   serverTimestamp
 } from "firebase/firestore";
+
 import { db } from "./firebase";
+
+const translations = {
+  am: {
+    courses: "ትምህርቶች",
+    add: "አዲስ ትምህርት ጨምር",
+    title: "የትምህርት ርዕስ",
+    description: "መግለጫ",
+    save: "አስቀምጥ",
+    lessons: "የትምህርት ክፍሎች",
+    lessonTitle: "የትምህርት ክፍል ርዕስ",
+    content: "የትምህርት ይዘት",
+    open: "ክፈት",
+    delete: "ሰርዝ",
+    back: "ተመለስ",
+    empty: "ምንም ትምህርት አልተገኘም",
+    loading: "በመጫን ላይ...",
+    noLessons: "ምንም የትምህርት ክፍል የለም።",
+    confirm: "ይህን ትምህርት መሰረዝ ትፈልጋለህ?",
+    added: "ትምህርቱ ተጨምሯል።",
+    lessonAdded: "የትምህርት ክፍሉ ተጨምሯል።",
+    deleted: "ትምህርቱ ተሰርዟል።",
+    error: "ስህተት ተፈጥሯል።"
+  },
+  en: {
+    courses: "Courses",
+    add: "Add New Course",
+    title: "Course Title",
+    description: "Description",
+    save: "Save",
+    lessons: "Lessons",
+    lessonTitle: "Lesson Title",
+    content: "Lesson Content",
+    open: "Open",
+    delete: "Delete",
+    back: "Back",
+    empty: "No courses found",
+    loading: "Loading...",
+    noLessons: "No lessons available.",
+    confirm: "Are you sure you want to delete this course?",
+    added: "Course added successfully.",
+    lessonAdded: "Lesson added successfully.",
+    deleted: "Course deleted.",
+    error: "An error occurred."
+  },
+  om: {
+    courses: "Barnoota",
+    add: "Barnoota haaraa dabali",
+    title: "Mata duree barnootaa",
+    description: "Ibsa",
+    save: "Olkaa'i",
+    lessons: "Kutaa barnootaa",
+    lessonTitle: "Mata duree kutaa",
+    content: "Qabiyyee barnootaa",
+    open: "Bani",
+    delete: "Haqi",
+    back: "Deebi'i",
+    empty: "Barnoonni hin argamne",
+    loading: "Fe'amaa jira...",
+    noLessons: "Kutaan barnootaa hin jiru.",
+    confirm: "Barnoota kana haquu barbaaddaa?",
+    added: "Barnoonni milkaa'inaan dabalameera.",
+    lessonAdded: "Kutaan barnootaa dabalameera.",
+    deleted: "Barnoonni haqameera.",
+    error: "Dogoggorri uumameera."
+  }
+};
 
 export default function Courses({ user, profile, language = "am" }) {
   const [courses, setCourses] = useState([]);
   const [selected, setSelected] = useState(null);
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonContent, setLessonContent] = useState("");
+
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
   const admin = profile?.role === "admin";
-
-  const words = {
-    am: {
-      courses: "ትምህርቶች",
-      add: "አዲስ ትምህርት ጨምር",
-      title: "የትምህርት ርዕስ",
-      description: "መግለጫ",
-      save: "አስቀምጥ",
-      lessons: "ትምህርት ክፍሎች",
-      lessonTitle: "የLesson ርዕስ",
-      content: "የLesson ይዘት",
-      open: "ክፈት",
-      delete: "ሰርዝ",
-      back: "ተመለስ",
-      empty: "ምንም ትምህርት አልተገኘም"
-    },
-    en: {
-      courses: "Courses",
-      add: "Add New Course",
-      title: "Course Title",
-      description: "Description",
-      save: "Save",
-      lessons: "Lessons",
-      lessonTitle: "Lesson Title",
-      content: "Lesson Content",
-      open: "Open",
-      delete: "Delete",
-      back: "Back",
-      empty: "No courses found"
-    },
-    om: {
-      courses: "Barnoota",
-      add: "Barnoota haaraa dabali",
-      title: "Mata duree barnootaa",
-      description: "Ibsa",
-      save: "Olkaa'i",
-      lessons: "Barnoota keessaa",
-      lessonTitle: "Mata duree kutaa",
-      content: "Qabiyyee kutaa",
-      open: "Bani",
-      delete: "Haqi",
-      back: "Deebi'i",
-      empty: "Barnoonni hin argamne"
-    }
-  };
-
-  const t = words[language] || words.am;
+  const t = translations[language] || translations.am;
 
   async function loadCourses() {
+    setLoading(true);
+    setMessage("");
+
     try {
       const snapshot = await getDocs(collection(db, "courses"));
-      setCourses(snapshot.docs.map(item => ({
+
+      const list = snapshot.docs.map(item => ({
         id: item.id,
         ...item.data()
-      })));
+      }));
+
+      setCourses(list);
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -89,12 +121,15 @@ export default function Courses({ user, profile, language = "am" }) {
   async function addCourse(event) {
     event.preventDefault();
 
-    if (!admin) return;
+    if (!admin || !user) return;
+
+    setSaving(true);
+    setMessage("");
 
     try {
       const result = await addDoc(collection(db, "courses"), {
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         createdBy: user.uid,
         createdAt: serverTimestamp()
       });
@@ -103,44 +138,25 @@ export default function Courses({ user, profile, language = "am" }) {
         ...previous,
         {
           id: result.id,
-          title,
-          description
+          title: title.trim(),
+          description: description.trim()
         }
       ]);
 
       setTitle("");
       setDescription("");
-      setMessage("Course added successfully");
+      setMessage(t.added);
     } catch (error) {
       setMessage(error.message);
-    }
-  }
-
-  async function addLesson(event) {
-    event.preventDefault();
-
-    if (!admin || !selected) return;
-
-    try {
-      await addDoc(
-        collection(db, "courses", selected.id, "lessons"),
-        {
-          title: lessonTitle,
-          content: lessonContent,
-          createdAt: serverTimestamp()
-        }
-      );
-
-      setLessonTitle("");
-      setLessonContent("");
-      setMessage("Lesson added successfully");
-      await openCourse(selected);
-    } catch (error) {
-      setMessage(error.message);
+    } finally {
+      setSaving(false);
     }
   }
 
   async function openCourse(course) {
+    setLoading(true);
+    setMessage("");
+
     try {
       const snapshot = await getDocs(
         collection(db, "courses", course.id, "lessons")
@@ -155,43 +171,102 @@ export default function Courses({ user, profile, language = "am" }) {
       });
     } catch (error) {
       setMessage(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function addLesson(event) {
+    event.preventDefault();
+
+    if (!admin || !selected) return;
+
+    setSaving(true);
+    setMessage("");
+
+    try {
+      await addDoc(
+        collection(db, "courses", selected.id, "lessons"),
+        {
+          title: lessonTitle.trim(),
+          content: lessonContent.trim(),
+          createdBy: user.uid,
+          createdAt: serverTimestamp()
+        }
+      );
+
+      setLessonTitle("");
+      setLessonContent("");
+
+      setMessage(t.lessonAdded);
+
+      await openCourse(selected);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setSaving(false);
     }
   }
 
   async function removeCourse(courseId) {
     if (!admin) return;
 
-    const confirmed = window.confirm("Delete this course?");
-    if (!confirmed) return;
+    if (!window.confirm(t.confirm)) return;
+
+    setSaving(true);
+    setMessage("");
 
     try {
+      // Delete lessons before deleting the course.
+      const lessonSnapshot = await getDocs(
+        collection(db, "courses", courseId, "lessons")
+      );
+
+      for (const lesson of lessonSnapshot.docs) {
+        await deleteDoc(
+          doc(db, "courses", courseId, "lessons", lesson.id)
+        );
+      }
+
       await deleteDoc(doc(db, "courses", courseId));
+
       setCourses(previous =>
         previous.filter(course => course.id !== courseId)
       );
+
       setSelected(null);
-      setMessage("Course deleted");
+      setMessage(t.deleted);
     } catch (error) {
       setMessage(error.message);
+    } finally {
+      setSaving(false);
     }
   }
 
-  if (loading) return <p>Loading courses...</p>;
+  if (loading) {
+    return <p>{t.loading}</p>;
+  }
 
   if (selected) {
     return (
-      <section>
+      <section className="courses-section">
         <button onClick={() => setSelected(null)}>
           {t.back}
         </button>
 
         <h2>{selected.title}</h2>
         <p>{selected.description}</p>
+
         <h3>{t.lessons}</h3>
 
-        {selected.lessons?.map(lesson => (
+        {selected.lessons.length === 0 && (
+          <p>{t.noLessons}</p>
+        )}
+
+        {selected.lessons.map(lesson => (
           <article key={lesson.id}>
             <h4>{lesson.title}</h4>
+
             <p style={{ whiteSpace: "pre-wrap" }}>
               {lesson.content}
             </p>
@@ -200,32 +275,36 @@ export default function Courses({ user, profile, language = "am" }) {
 
         {admin && (
           <form onSubmit={addLesson}>
-            <h3>Add Lesson</h3>
+            <h3>{t.lessonTitle}</h3>
 
             <input
               value={lessonTitle}
-              onChange={event => setLessonTitle(event.target.value)}
+              onChange={e => setLessonTitle(e.target.value)}
               placeholder={t.lessonTitle}
               required
             />
 
             <textarea
               value={lessonContent}
-              onChange={event => setLessonContent(event.target.value)}
+              onChange={e => setLessonContent(e.target.value)}
               placeholder={t.content}
+              rows={6}
               required
-              rows="6"
             />
 
-            <button type="submit">{t.save}</button>
+            <button type="submit" disabled={saving}>
+              {saving ? t.loading : t.save}
+            </button>
           </form>
         )}
+
+        {message && <p role="alert">{message}</p>}
       </section>
     );
   }
 
   return (
-    <section>
+    <section className="courses-section">
       <h2>{t.courses}</h2>
 
       {admin && (
@@ -234,23 +313,27 @@ export default function Courses({ user, profile, language = "am" }) {
 
           <input
             value={title}
-            onChange={event => setTitle(event.target.value)}
+            onChange={e => setTitle(e.target.value)}
             placeholder={t.title}
             required
           />
 
           <textarea
             value={description}
-            onChange={event => setDescription(event.target.value)}
+            onChange={e => setDescription(e.target.value)}
             placeholder={t.description}
-            rows="3"
+            rows={3}
           />
 
-          <button type="submit">{t.save}</button>
+          <button type="submit" disabled={saving}>
+            {saving ? t.loading : t.save}
+          </button>
         </form>
       )}
 
-      {courses.length === 0 && <p>{t.empty}</p>}
+      {courses.length === 0 && (
+        <p>{t.empty}</p>
+      )}
 
       {courses.map(course => (
         <article key={course.id}>
@@ -262,14 +345,17 @@ export default function Courses({ user, profile, language = "am" }) {
           </button>
 
           {admin && (
-            <button onClick={() => removeCourse(course.id)}>
+            <button
+              onClick={() => removeCourse(course.id)}
+              disabled={saving}
+            >
               {t.delete}
             </button>
           )}
         </article>
       ))}
 
-      {message && <p>{message}</p>}
+      {message && <p role="alert">{message}</p>}
     </section>
   );
 }
