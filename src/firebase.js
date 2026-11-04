@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDvvOYu7pq7iNeh1tzoLKU_VAvoFJQMdbc",
+  apiKey: "AIzaSyDvv0Yu7pq7iNeh1tzoLKU_VAvoFJQMdbc",
   authDomain: "digital-learning-ethiopia.firebaseapp.com",
   projectId: "digital-learning-ethiopia",
   storageBucket: "digital-learning-ethiopia.firebasestorage.app",
