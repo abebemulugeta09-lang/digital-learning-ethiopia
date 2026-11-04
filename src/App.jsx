@@ -1,4 +1,6 @@
+
 import { useEffect, useState } from "react";
+
 import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
@@ -42,12 +44,26 @@ const languages = {
     switchLogin: "መለያ አለኝ፤ ግባ",
     resetSent: "የይለፍ ቃል መቀየሪያ መልዕክት ተልኳል።",
     registered: "ምዝገባው ተሳክቷል።",
-    invalid: "Email ወይም Password ትክክል አይደለም።",
-    emailRequired: "እባክህ Email አስገባ።",
-    passwordShort: "የይለፍ ቃል ቢያንስ 6 ቁምፊዎች መሆን አለበት።",
+    invalid: "ኢሜይል ወይም የይለፍ ቃል ትክክል አይደለም።",
+    emailRequired: "እባክህ ኢሜይል አስገባ።",
+    passwordShort: "የይለፍ ቃል ቢያንስ 6 ቁምፊዎች ይኑሩት።",
     student: "ተማሪ",
     noAccount: "መለያ የለህም?",
-    haveAccount: "መለያ አለህ?"
+    haveAccount: "መለያ አለህ?",
+    profile: "የእኔ መለያ",
+    account: "የመለያ መረጃ",
+    role: "የተጠቃሚ ሚና",
+    adminPanel: "የአስተዳዳሪ መቆጣጠሪያ",
+    studentPanel: "የተማሪ መቆጣጠሪያ",
+    resultsInfo: "የፈተና ውጤቶችህ እዚህ ይታያሉ።",
+    certificatesInfo: "ያገኘሃቸው ሰርተፍኬቶች እዚህ ይታያሉ።",
+    profileError: "የመለያ መረጃ መጫን አልተቻለም።",
+    networkError: "የኢንተርኔት ችግር አለ።",
+    unexpected: "ያልታወቀ ስህተት ተፈጥሯል።",
+    emailExists: "ይህ ኢሜይል ቀድሞ ተመዝግቧል።",
+    invalidEmail: "ትክክለኛ ኢሜይል አስገባ።",
+    accountCreated: "መለያህ ተፈጥሯል።",
+    profileNotice: "የመለያ ሚናህ በዳታቤዝ ላይ መረጋገጥ አለበት።"
   },
 
   en: {
@@ -78,7 +94,21 @@ const languages = {
     passwordShort: "Password must contain at least 6 characters.",
     student: "Student",
     noAccount: "Don't have an account?",
-    haveAccount: "Already have an account?"
+    haveAccount: "Already have an account?",
+    profile: "My account",
+    account: "Account information",
+    role: "User role",
+    adminPanel: "Administrator dashboard",
+    studentPanel: "Student dashboard",
+    resultsInfo: "Your exam results will appear here.",
+    certificatesInfo: "Your earned certificates will appear here.",
+    profileError: "Could not load your profile.",
+    networkError: "Network error. Check your internet connection.",
+    unexpected: "An unexpected error occurred.",
+    emailExists: "This email is already registered.",
+    invalidEmail: "Please enter a valid email address.",
+    accountCreated: "Your account has been created.",
+    profileNotice: "Your account role must be verified in the database."
   },
 
   om: {
@@ -109,30 +139,46 @@ const languages = {
     passwordShort: "Jechi darbii yoo xiqqaate qubee 6 qabaachuu qaba.",
     student: "Barataa",
     noAccount: "Herrega hin qabduu?",
-    haveAccount: "Herrega qabdaa?"
+    haveAccount: "Herrega qabdaa?",
+    profile: "Herrega koo",
+    account: "Odeeffannoo herregaa",
+    role: "Gahee fayyadamaa",
+    adminPanel: "Bulchiinsa",
+    studentPanel: "Bulchiinsa barataa",
+    resultsInfo: "Bu'aan qormaata kee asitti mul'ata.",
+    certificatesInfo: "Ragaan kee asitti mul'ata.",
+    profileError: "Odeeffannoon herregaa hin banamne.",
+    networkError: "Rakkoon interneetii jira.",
+    unexpected: "Dogoggorri hin beekamne uumameera.",
+    emailExists: "Imeeliin kun duraan galmaa'eera.",
+    invalidEmail: "Imeelii sirrii galchi.",
+    accountCreated: "Herregni kee uumameera.",
+    profileNotice: "Gaheen herrega kee kuusaa odeeffannoo keessatti mirkanaa'uu qaba."
   }
 };
 
 function getError(error, t) {
-  if (
-    error.code === "auth/invalid-credential" ||
-    error.code === "auth/wrong-password" ||
-    error.code === "auth/user-not-found"
-  ) return t.invalid;
+  switch (error?.code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return t.invalid;
 
-  if (error.code === "auth/email-already-in-use")
-    return "This email is already registered.";
+    case "auth/email-already-in-use":
+      return t.emailExists;
 
-  if (error.code === "auth/weak-password")
-    return t.passwordShort;
+    case "auth/weak-password":
+      return t.passwordShort;
 
-  if (error.code === "auth/invalid-email")
-    return "Invalid email address.";
+    case "auth/invalid-email":
+      return t.invalidEmail;
 
-  if (error.code === "auth/network-request-failed")
-    return "Network error. Check your internet connection.";
+    case "auth/network-request-failed":
+      return t.networkError;
 
-  return error.message || "An unexpected error occurred.";
+    default:
+      return error?.message || t.unexpected;
+  }
 }
 
 export default function App() {
@@ -140,8 +186,9 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState("home");
+  const [profileLoading, setProfileLoading] = useState(false);
 
+  const [page, setPage] = useState("home");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -153,48 +200,84 @@ export default function App() {
 
   const t = languages[language];
 
+  // Authentication and user profile
   useEffect(() => {
+    let active = true;
+
     const unsubscribe = onAuthStateChanged(auth, async currentUser => {
+      if (!active) return;
+
       setUser(currentUser);
+      setProfile(null);
+      setMessage("");
 
-      if (currentUser) {
-        try {
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
-
-          if (userSnap.exists()) {
-            setProfile(userSnap.data());
-          } else {
-            const newProfile = {
-              name: currentUser.displayName || "",
-              email: currentUser.email || "",
-              role: "student",
-              createdAt: serverTimestamp()
-            };
-
-            await setDoc(userRef, newProfile);
-            setProfile(newProfile);
-          }
-        } catch (error) {
-          setMessage(error.message);
-          setProfile(null);
-        }
-      } else {
-        setProfile(null);
+      if (!currentUser) {
+        setLoading(false);
+        return;
       }
 
-      setLoading(false);
+      setProfileLoading(true);
+
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!active) return;
+
+        if (userSnap.exists()) {
+          setProfile(userSnap.data());
+        } else {
+          const newProfile = {
+            name: currentUser.displayName || "",
+            email: currentUser.email || "",
+            role: "student",
+            createdAt: serverTimestamp()
+          };
+
+          await setDoc(userRef, newProfile);
+
+          if (!active) return;
+
+          setProfile(newProfile);
+        }
+      } catch (error) {
+        if (active) {
+          setMessage(error.message || t.profileError);
+          setProfile(null);
+        }
+      } finally {
+        if (active) {
+          setProfileLoading(false);
+          setLoading(false);
+        }
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
+  // Login and registration
   async function handleAuth(event) {
     event.preventDefault();
     setMessage("");
 
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      setMessage(t.emailRequired);
+      return;
+    }
+
     if (password.length < 6) {
       setMessage(t.passwordShort);
+      return;
+    }
+
+    if (isRegister && !fullName.trim()) {
+      setMessage(t.name);
       return;
     }
 
@@ -204,7 +287,7 @@ export default function App() {
       if (isRegister) {
         const result = await createUserWithEmailAndPassword(
           auth,
-          email.trim(),
+          cleanEmail,
           password
         );
 
@@ -212,22 +295,25 @@ export default function App() {
           displayName: fullName.trim()
         });
 
-        const userRef = doc(db, "users", result.user.uid);
-
         const newProfile = {
           name: fullName.trim(),
-          email: email.trim(),
+          email: cleanEmail,
           role: "student",
           createdAt: serverTimestamp()
         };
 
-        await setDoc(userRef, newProfile);
+        await setDoc(
+          doc(db, "users", result.user.uid),
+          newProfile
+        );
+
         setProfile(newProfile);
         setMessage(t.registered);
+        setPage("home");
       } else {
         await signInWithEmailAndPassword(
           auth,
-          email.trim(),
+          cleanEmail,
           password
         );
       }
@@ -238,6 +324,7 @@ export default function App() {
     }
   }
 
+  // Password reset
   async function resetPassword() {
     setMessage("");
 
@@ -258,20 +345,31 @@ export default function App() {
     }
   }
 
+  // Sign out
   async function logout() {
+    setBusy(true);
+
     try {
       await signOut(auth);
       setPage("home");
+      setPassword("");
       setMessage("");
     } catch (error) {
       setMessage(getError(error, t));
+    } finally {
+      setBusy(false);
     }
   }
 
   if (loading) {
-    return <main className="loading">{t.loading}</main>;
+    return (
+      <main className="loading">
+        <h2>{t.loading}</h2>
+      </main>
+    );
   }
 
+  // Login and registration page
   if (!user) {
     return (
       <main className="auth-page">
@@ -280,10 +378,11 @@ export default function App() {
 
           <select
             value={language}
-            onChange={e => {
-              setLanguage(e.target.value);
+            onChange={event => {
+              setLanguage(event.target.value);
               setMessage("");
             }}
+            aria-label="Language"
           >
             <option value="am">አማርኛ</option>
             <option value="en">English</option>
@@ -297,8 +396,9 @@ export default function App() {
               <input
                 type="text"
                 value={fullName}
-                onChange={e => setFullName(e.target.value)}
+                onChange={event => setFullName(event.target.value)}
                 placeholder={t.name}
+                autoComplete="name"
                 required
               />
             )}
@@ -306,8 +406,9 @@ export default function App() {
             <input
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={event => setEmail(event.target.value)}
               placeholder={t.email}
+              autoComplete="email"
               required
             />
 
@@ -315,22 +416,27 @@ export default function App() {
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={event => setPassword(event.target.value)}
                 placeholder={t.password}
-                required
+                autoComplete={isRegister ? "new-password" : "current-password"}
                 minLength={6}
+                required
               />
 
               <button
                 type="button"
-                onClick={() => setShowPassword(v => !v)}
+                onClick={() => setShowPassword(value => !value)}
               >
                 {showPassword ? t.hide : t.show}
               </button>
             </div>
 
             <button type="submit" disabled={busy}>
-              {busy ? t.loading : isRegister ? t.register : t.login}
+              {busy
+                ? t.loading
+                : isRegister
+                  ? t.register
+                  : t.login}
             </button>
           </form>
 
@@ -347,7 +453,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => {
-              setIsRegister(v => !v);
+              setIsRegister(value => !value);
               setMessage("");
               setPassword("");
               setShowPassword(false);
@@ -362,43 +468,96 @@ export default function App() {
     );
   }
 
+  const isAdmin = profile?.role === "admin";
+
+  // Main application
   return (
     <main className="app">
-      <header>
+      <header className="app-header">
         <h1>{t.title}</h1>
 
         <select
           value={language}
-          onChange={e => setLanguage(e.target.value)}
+          onChange={event => setLanguage(event.target.value)}
+          aria-label="Language"
         >
           <option value="am">አማርኛ</option>
           <option value="en">English</option>
           <option value="om">Afaan Oromoo</option>
         </select>
 
-        <button onClick={logout}>{t.logout}</button>
+        <button onClick={logout} disabled={busy}>
+          {busy ? t.loading : t.logout}
+        </button>
       </header>
 
-      <nav>
-        <button onClick={() => setPage("home")}>{t.home}</button>
-        <button onClick={() => setPage("courses")}>{t.courses}</button>
-        <button onClick={() => setPage("results")}>{t.results}</button>
-        <button onClick={() => setPage("certificates")}>
+      <nav className="main-nav">
+        <button
+          className={page === "home" ? "active" : ""}
+          onClick={() => setPage("home")}
+        >
+          {t.home}
+        </button>
+
+        <button
+          className={page === "courses" ? "active" : ""}
+          onClick={() => setPage("courses")}
+        >
+          {t.courses}
+        </button>
+
+        <button
+          className={page === "results" ? "active" : ""}
+          onClick={() => setPage("results")}
+        >
+          {t.results}
+        </button>
+
+        <button
+          className={page === "certificates" ? "active" : ""}
+          onClick={() => setPage("certificates")}
+        >
           {t.certificates}
         </button>
 
-        {profile?.role === "admin" && (
-          <button onClick={() => setPage("admin")}>{t.admin}</button>
+        {isAdmin && (
+          <button
+            className={page === "admin" ? "active" : ""}
+            onClick={() => setPage("admin")}
+          >
+            {t.admin}
+          </button>
         )}
       </nav>
 
       <section className="content">
+
+        {profileLoading && <p>{t.loading}</p>}
+
         {page === "home" && (
-          <>
+          <section className="dashboard">
             <h2>{t.welcome}</h2>
-            <h3>{profile?.name || user.email}</h3>
-            <p>{profile?.role === "admin" ? t.admin : t.student}</p>
-          </>
+
+            <h3>{profile?.name || user.displayName || user.email}</h3>
+
+            <p>
+              {t.role}: {isAdmin ? t.admin : t.student}
+            </p>
+
+            <div className="dashboard-links">
+              <button onClick={() => setPage("courses")}>
+                {t.courses}
+              </button>
+
+              <button onClick={() => setPage("results")}>
+                {t.results}
+              </button>
+
+              <button onClick={() => setPage("certificates")}>
+                {t.certificates}
+              </button>
+            </div>
+          </section>
         )}
 
         {page === "courses" && (
@@ -412,31 +571,31 @@ export default function App() {
         {page === "results" && (
           <section>
             <h2>{t.results}</h2>
-            <p>{language === "am" ? "ውጤቶች እዚህ ይታያሉ።" :
-              language === "om" ? "Bu'aan asitti mul'ata." :
-              "Results will appear here."}</p>
+            <p>{t.resultsInfo}</p>
           </section>
         )}
 
         {page === "certificates" && (
           <section>
             <h2>{t.certificates}</h2>
-            <p>{language === "am" ? "ሰርተፍኬቶች እዚህ ይታያሉ።" :
-              language === "om" ? "Ragaan asitti mul'ata." :
-              "Certificates will appear here."}</p>
+            <p>{t.certificatesInfo}</p>
           </section>
         )}
 
-        {page === "admin" && profile?.role === "admin" && (
+        {page === "admin" && isAdmin && (
           <section>
-            <h2>{t.admin}</h2>
-            <p>{language === "am" ? "የአስተዳዳሪ መቆጣጠሪያ" :
-              language === "om" ? "Bulchiinsa" :
-              "Administrator dashboard"}</p>
+            <h2>{t.adminPanel}</h2>
+
+            <p>{profile?.name || user.email}</p>
+
             <button onClick={() => setPage("courses")}>
               {t.courses}
             </button>
           </section>
+        )}
+
+        {!profile && !profileLoading && message && (
+          <p role="alert">{message}</p>
         )}
       </section>
     </main>
