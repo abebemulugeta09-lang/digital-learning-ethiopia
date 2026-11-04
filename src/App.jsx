@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   onAuthStateChanged,
@@ -8,7 +7,16 @@ import {
   signOut,
   updateProfile
 } from "firebase/auth";
-import { auth } from "./firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc
+} from "firebase/firestore";
+import { QRCodeSVG } from "qrcode.react";
+import { auth, db } from "./firebase";
 
 const words = {
   am: {
@@ -34,7 +42,14 @@ const words = {
     loading: "እባክዎ ይጠብቁ...",
     noAccount: "መለያ የለዎትም?",
     haveAccount: "መለያ አለዎት?",
-    success: "የመመለሻ መልዕክት ወደ ኢሜይልዎ ተልኳል።"
+    success: "የመመለሻ መልዕክት ወደ ኢሜይልዎ ተልኳል።",
+    noCertificates: "ገና ሰርተፍኬት አልተሰጠዎትም።",
+    certificateNumber: "የሰርተፍኬት ቁጥር",
+    verify: "ሰርተፍኬት ማረጋገጫ",
+    valid: "የተረጋገጠ ሰርተፍኬት",
+    invalid: "ሰርተፍኬቱ አልተገኘም።",
+    status: "ሁኔታ",
+    course: "ኮርስ"
   },
   om: {
     subtitle: "Sirna Barnootaa fi Ragaa Dijitaalaa",
@@ -59,7 +74,14 @@ const words = {
     loading: "Mee eeggadhaa...",
     noAccount: "Herrega hin qabduu?",
     haveAccount: "Herrega qabduu?",
-    success: "Ergaan deebisuu gara imeelii keessaniitti ergameera."
+    success: "Ergaan deebisuu gara imeelii keessaniitti ergameera.",
+    noCertificates: "Ragaan ammaaf hin kennamne.",
+    certificateNumber: "Lakkoofsa Ragaa",
+    verify: "Ragaa Mirkaneessi",
+    valid: "Ragaa Sirrii",
+    invalid: "Ragaan hin argamne.",
+    status: "Haala",
+    course: "Koorsii"
   },
   en: {
     subtitle: "Digital Learning and Certification System",
@@ -84,117 +106,34 @@ const words = {
     loading: "Please wait...",
     noAccount: "Don't have an account?",
     haveAccount: "Already have an account?",
-    success: "Password reset email sent."
+    success: "Password reset email sent.",
+    noCertificates: "No certificates have been issued yet.",
+    certificateNumber: "Certificate Number",
+    verify: "Certificate Verification",
+    valid: "Verified Certificate",
+    invalid: "Certificate not found.",
+    status: "Status",
+    course: "Course"
   }
 };
 
 const categories = [
-  {
-    id: 1,
-    icon: "📊",
-    am: "አመራርና አስተዳደር",
-    om: "Hoggansa fi Bulchiinsa",
-    en: "Leadership & Management"
-  },
-  {
-    id: 2,
-    icon: "💻",
-    am: "ዲጂታል ክህሎትና ቴክኖሎጂ",
-    om: "Dandeettii Dijitaalaa",
-    en: "Digital Skills & Technology"
-  },
-  {
-    id: 3,
-    icon: "🏛️",
-    am: "ሲቪክ ትምህርት",
-    om: "Barnoota Siivikii",
-    en: "Civic Education"
-  },
-  {
-    id: 4,
-    icon: "🎓",
-    am: "የሙያ ክህሎት",
-    om: "Dandeettii Ogummaa",
-    en: "Professional Skills"
-  },
-  {
-    id: 5,
-    icon: "📈",
-    am: "ኢኮኖሚና ልማት",
-    om: "Diinagdee fi Misooma",
-    en: "Economy & Development"
-  },
-  {
-    id: 6,
-    icon: "🤝",
-    am: "ግንኙነትና ቡድን ሥራ",
-    om: "Walqunnamtii fi Hojii Garee",
-    en: "Communication & Teamwork"
-  },
-  {
-    id: 7,
-    icon: "📚",
-    am: "ሌሎች",
-    om: "Kan Biroo",
-    en: "Other"
-  }
+  { id: 1, icon: "📊", am: "አመራርና አስተዳደር", om: "Hoggansa fi Bulchiinsa", en: "Leadership & Management" },
+  { id: 2, icon: "💻", am: "ዲጂታል ክህሎትና ቴክኖሎጂ", om: "Dandeettii Dijitaalaa", en: "Digital Skills & Technology" },
+  { id: 3, icon: "🏛️", am: "ሲቪክ ትምህርት", om: "Barnoota Siivikii", en: "Civic Education" },
+  { id: 4, icon: "🎓", am: "የሙያ ክህሎት", om: "Dandeettii Ogummaa", en: "Professional Skills" },
+  { id: 5, icon: "📈", am: "ኢኮኖሚና ልማት", om: "Diinagdee fi Misooma", en: "Economy & Development" },
+  { id: 6, icon: "🤝", am: "ግንኙነትና ቡድን ሥራ", om: "Walqunnamtii fi Hojii Garee", en: "Communication & Teamwork" },
+  { id: 7, icon: "📚", am: "ሌሎች", om: "Kan Biroo", en: "Other" }
 ];
 
 const courses = [
-  {
-    id: 1,
-    category: 1,
-    icon: "📊",
-    am: "የአመራር መሠረታዊ እውቀት",
-    om: "Bu'uura Hoggansaa",
-    en: "Leadership Fundamentals",
-    duration: "30 min"
-  },
-  {
-    id: 2,
-    category: 2,
-    icon: "💻",
-    am: "የዲጂታል ክህሎት መግቢያ",
-    om: "Seensa Dandeettii Dijitaalaa",
-    en: "Introduction to Digital Skills",
-    duration: "45 min"
-  },
-  {
-    id: 3,
-    category: 3,
-    icon: "🏛️",
-    am: "የዜግነት ኃላፊነት",
-    om: "Itti Gaafatamummaa Lammummaa",
-    en: "Civic Responsibility",
-    duration: "25 min"
-  },
-  {
-    id: 4,
-    category: 4,
-    icon: "🎓",
-    am: "የሙያ እድገት",
-    om: "Guddina Ogummaa",
-    en: "Professional Development",
-    duration: "35 min"
-  },
-  {
-    id: 5,
-    category: 5,
-    icon: "📈",
-    am: "የኢኮኖሚ መሠረታዊ እውቀት",
-    om: "Bu'uura Diinagdee",
-    en: "Economic Fundamentals",
-    duration: "40 min"
-  },
-  {
-    id: 6,
-    category: 6,
-    icon: "🤝",
-    am: "የግንኙነት ክህሎት",
-    om: "Dandeettii Walqunnamtii",
-    en: "Communication Skills",
-    duration: "35 min"
-  }
+  { id: 1, category: 1, icon: "📊", am: "የአመራር መሠረታዊ እውቀት", om: "Bu'uura Hoggansaa", en: "Leadership Fundamentals", duration: "30 min" },
+  { id: 2, category: 2, icon: "💻", am: "የዲጂታል ክህሎት መግቢያ", om: "Seensa Dandeettii Dijitaalaa", en: "Introduction to Digital Skills", duration: "45 min" },
+  { id: 3, category: 3, icon: "🏛️", am: "የዜግነት ኃላፊነት", om: "Itti Gaafatamummaa Lammummaa", en: "Civic Responsibility", duration: "25 min" },
+  { id: 4, category: 4, icon: "🎓", am: "የሙያ እድገት", om: "Guddina Ogummaa", en: "Professional Development", duration: "35 min" },
+  { id: 5, category: 5, icon: "📈", am: "የኢኮኖሚ መሠረታዊ እውቀት", om: "Bu'uura Diinagdee", en: "Economic Fundamentals", duration: "40 min" },
+  { id: 6, category: 6, icon: "🤝", am: "የግንኙነት ክህሎት", om: "Dandeettii Walqunnamtii", en: "Communication Skills", duration: "35 min" }
 ];
 
 const buttonStyle = {
@@ -218,6 +157,10 @@ export default function App() {
   const [page, setPage] = useState("home");
   const [category, setCategory] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [certificates, setCertificates] = useState([]);
+  const [certificateLoading, setCertificateLoading] = useState(false);
+  const [verification, setVerification] = useState(null);
+  const [verificationLoading, setVerificationLoading] = useState(false);
 
   const t = words[language];
 
@@ -226,9 +169,74 @@ export default function App() {
       setUser(currentUser);
       setAuthReady(true);
     });
-
     return unsubscribe;
   }, []);
+
+  // Public QR verification: ?verify=CERTIFICATE_DOCUMENT_ID
+  useEffect(() => {
+    const certificateId = new URLSearchParams(window.location.search).get("verify");
+
+    if (!certificateId) return;
+
+    async function verifyCertificate() {
+      setVerificationLoading(true);
+      try {
+        const certificateRef = doc(db, "certificates", certificateId);
+        const result = await getDoc(certificateRef);
+
+        if (result.exists()) {
+          const data = result.data();
+          setVerification({
+            found: true,
+            publicName: data.publicName || "",
+            certificateNumber: data.certificateNumber || "",
+            courseTitle: data.courseTitle || "",
+            status: data.status || "unknown"
+          });
+        } else {
+          setVerification({ found: false });
+        }
+      } catch (error) {
+        setVerification({ found: false, error: error.message });
+      } finally {
+        setVerificationLoading(false);
+      }
+    }
+
+    verifyCertificate();
+  }, []);
+
+  // Load certificates belonging to the signed-in student.
+  useEffect(() => {
+    if (!user) {
+      setCertificates([]);
+      return;
+    }
+
+    async function loadCertificates() {
+      setCertificateLoading(true);
+      try {
+        const certificateQuery = query(
+          collection(db, "certificates"),
+          where("userId", "==", user.uid)
+        );
+        const snapshot = await getDocs(certificateQuery);
+
+        setCertificates(
+          snapshot.docs.map((item) => ({
+            id: item.id,
+            ...item.data()
+          }))
+        );
+      } catch (error) {
+        setMessage("Certificate loading error: " + error.message);
+      } finally {
+        setCertificateLoading(false);
+      }
+    }
+
+    loadCertificates();
+  }, [user]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -258,7 +266,6 @@ export default function App() {
           email.trim(),
           password
         );
-
         setUser(result.user);
       }
 
@@ -295,6 +302,7 @@ export default function App() {
       setPage("home");
       setCategory(null);
       setSelectedCourse(null);
+      setCertificates([]);
     } catch (error) {
       setMessage(error.message);
     }
@@ -304,12 +312,40 @@ export default function App() {
     (course) => category === null || course.category === category
   );
 
-  if (!authReady) {
+  if (verification) {
     return (
-      <div style={styles.center}>
-        <h2>{t.loading}</h2>
+      <div style={styles.app}>
+        <header style={styles.header}>
+          <strong>📚 Digital Learning Ethiopia</strong>
+        </header>
+        <main style={styles.main}>
+          <section style={styles.panel}>
+            <h2>{t.verify}</h2>
+            {verification.found ? (
+              <>
+                <h3 style={{ color: "#075e48" }}>✓ {t.valid}</h3>
+                <p><strong>{t.name}:</strong> {verification.publicName}</p>
+                <p><strong>{t.certificateNumber}:</strong> {verification.certificateNumber}</p>
+                <p><strong>{t.course}:</strong> {verification.courseTitle}</p>
+                <p><strong>{t.status}:</strong> {verification.status}</p>
+              </>
+            ) : (
+              <p style={styles.error}>
+                {verification.error || t.invalid}
+              </p>
+            )}
+          </section>
+        </main>
       </div>
     );
+  }
+
+  if (verificationLoading) {
+    return <div style={styles.center}><h2>{t.loading}</h2></div>;
+  }
+
+  if (!authReady) {
+    return <div style={styles.center}><h2>{t.loading}</h2></div>;
   }
 
   if (!user) {
@@ -317,11 +353,7 @@ export default function App() {
       <div style={styles.app}>
         <header style={styles.header}>
           <strong>📚 Digital Learning Ethiopia</strong>
-          <select
-            style={styles.select}
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-          >
+          <select style={styles.select} value={language} onChange={(e) => setLanguage(e.target.value)}>
             <option value="am">አማርኛ</option>
             <option value="om">Afaan Oromoo</option>
             <option value="en">English</option>
@@ -334,29 +366,14 @@ export default function App() {
 
           <div style={styles.tabs}>
             <button
-              style={{
-                ...buttonStyle,
-                background: mode === "login" ? "#075e48" : "#e8efec",
-                color: mode === "login" ? "white" : "#24352f"
-              }}
-              onClick={() => {
-                setMode("login");
-                setMessage("");
-              }}
+              style={{ ...buttonStyle, background: mode === "login" ? "#075e48" : "#e8efec", color: mode === "login" ? "white" : "#24352f" }}
+              onClick={() => { setMode("login"); setMessage(""); }}
             >
               {t.login}
             </button>
-
             <button
-              style={{
-                ...buttonStyle,
-                background: mode === "register" ? "#075e48" : "#e8efec",
-                color: mode === "register" ? "white" : "#24352f"
-              }}
-              onClick={() => {
-                setMode("register");
-                setMessage("");
-              }}
+              style={{ ...buttonStyle, background: mode === "register" ? "#075e48" : "#e8efec", color: mode === "register" ? "white" : "#24352f" }}
+              onClick={() => { setMode("register"); setMessage(""); }}
             >
               {t.register}
             </button>
@@ -366,76 +383,42 @@ export default function App() {
             {mode === "register" && (
               <label style={styles.label}>
                 {t.name}
-                <input
-                  style={styles.input}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
+                <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} required />
               </label>
             )}
 
             <label style={styles.label}>
               {t.email}
-              <input
-                style={styles.input}
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <input style={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </label>
 
             <label style={styles.label}>
               {t.password}
-              <input
-                style={styles.input}
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                minLength={6}
-                required
-              />
+              <input style={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
             </label>
 
             {message && <p style={styles.error}>{message}</p>}
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={styles.primaryButton}
-            >
+            <button type="submit" disabled={loading} style={styles.primaryButton}>
               {loading ? t.loading : mode === "login" ? t.login : t.register}
             </button>
           </form>
 
           {mode === "login" && (
-            <button
-              style={styles.link}
-              onClick={resetPassword}
-              disabled={loading}
-            >
+            <button style={styles.link} onClick={resetPassword} disabled={loading}>
               {t.forgot}
             </button>
           )}
 
           <p style={{ textAlign: "center" }}>
             {mode === "login" ? t.noAccount : t.haveAccount}
-            <button
-              style={styles.link}
-              onClick={() => {
-                setMode(mode === "login" ? "register" : "login");
-                setMessage("");
-              }}
-            >
+            <button style={styles.link} onClick={() => { setMode(mode === "login" ? "register" : "login"); setMessage(""); }}>
               {mode === "login" ? t.register : t.login}
             </button>
           </p>
         </section>
 
-        <footer style={styles.footer}>
-          © 2026 Digital Learning Ethiopia
-        </footer>
+        <footer style={styles.footer}>© 2026 Digital Learning Ethiopia</footer>
       </div>
     );
   }
@@ -451,18 +434,12 @@ export default function App() {
         </div>
 
         <div style={styles.headerRight}>
-          <select
-            style={styles.select}
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-          >
+          <select style={styles.select} value={language} onChange={(e) => setLanguage(e.target.value)}>
             <option value="am">አማርኛ</option>
             <option value="om">Afaan Oromoo</option>
             <option value="en">English</option>
           </select>
-          <button style={styles.logout} onClick={handleLogout}>
-            {t.logout}
-          </button>
+          <button style={styles.logout} onClick={handleLogout}>{t.logout}</button>
         </div>
       </header>
 
@@ -474,14 +451,7 @@ export default function App() {
             <h2>{t.categories}</h2>
             <div style={styles.grid}>
               {categories.map((item) => (
-                <button
-                  key={item.id}
-                  style={styles.categoryCard}
-                  onClick={() => {
-                    setCategory(item.id);
-                    setPage("courses");
-                  }}
-                >
+                <button key={item.id} style={styles.categoryCard} onClick={() => { setCategory(item.id); setPage("courses"); }}>
                   <span style={{ fontSize: 30 }}>{item.icon}</span>
                   <strong>{item[language]}</strong>
                 </button>
@@ -495,14 +465,7 @@ export default function App() {
                 ["🏆", t.certificates, "certificates"],
                 ["📚", t.library, "library"]
               ].map(([icon, label, target]) => (
-                <button
-                  key={target}
-                  style={styles.menuCard}
-                  onClick={() => {
-                    setPage(target);
-                    setCategory(null);
-                  }}
-                >
+                <button key={target} style={styles.menuCard} onClick={() => { setPage(target); setCategory(null); }}>
                   <span style={{ fontSize: 28 }}>{icon}</span>
                   <strong>{label}</strong>
                 </button>
@@ -514,42 +477,19 @@ export default function App() {
         {page === "courses" && (
           <section style={styles.panel}>
             <h2>{t.courses}</h2>
-
-            <button
-              style={styles.secondaryButton}
-              onClick={() => setCategory(null)}
-            >
-              {t.all}
-            </button>
-
+            <button style={styles.secondaryButton} onClick={() => setCategory(null)}>{t.all}</button>
             {visibleCourses.length === 0 && <p>{t.empty}</p>}
-
             {visibleCourses.map((course) => (
-              <button
-                key={course.id}
-                style={styles.courseCard}
-                onClick={() => {
-                  setSelectedCourse(course);
-                  setPage("course");
-                }}
-              >
+              <button key={course.id} style={styles.courseCard} onClick={() => { setSelectedCourse(course); setPage("course"); }}>
                 <span style={{ fontSize: 28 }}>{course.icon}</span>
                 <span style={{ flex: 1, textAlign: "left" }}>
                   <strong>{course[language]}</strong>
-                  <small style={{ display: "block", marginTop: 5 }}>
-                    {t.duration}: {course.duration}
-                  </small>
+                  <small style={{ display: "block", marginTop: 5 }}>{t.duration}: {course.duration}</small>
                 </span>
                 <span>›</span>
               </button>
             ))}
-
-            <button
-              style={styles.secondaryButton}
-              onClick={() => setPage("home")}
-            >
-              {t.back}
-            </button>
+            <button style={styles.secondaryButton} onClick={() => setPage("home")}>{t.back}</button>
           </section>
         )}
 
@@ -559,38 +499,52 @@ export default function App() {
             <h2>{selectedCourse[language]}</h2>
             <p>{t.duration}: {selectedCourse.duration}</p>
             <p>{t.empty}</p>
-            <button
-              style={styles.secondaryButton}
-              onClick={() => setPage("courses")}
-            >
-              {t.back}
-            </button>
+            <button style={styles.secondaryButton} onClick={() => setPage("courses")}>{t.back}</button>
           </section>
         )}
 
-        {["results", "certificates", "library"].includes(page) && (
+        {page === "certificates" && (
           <section style={styles.panel}>
-            <h2>
-              {page === "results"
-                ? t.results
-                : page === "certificates"
-                ? t.certificates
-                : t.library}
-            </h2>
+            <h2>{t.certificates}</h2>
+
+            {certificateLoading && <p>{t.loading}</p>}
+
+            {!certificateLoading && certificates.length === 0 && (
+              <p>{t.noCertificates}</p>
+            )}
+
+            {certificates.map((certificate) => {
+              const verificationUrl =
+                `${window.location.origin}${window.location.pathname}?verify=${encodeURIComponent(certificate.id)}`;
+
+              return (
+                <div key={certificate.id} style={styles.certificateCard}>
+                  <h3>{certificate.courseTitle || "Course Certificate"}</h3>
+                  <p><strong>{t.name}:</strong> {certificate.publicName || user.displayName || ""}</p>
+                  <p><strong>{t.certificateNumber}:</strong> {certificate.certificateNumber || certificate.id}</p>
+                  <p><strong>{t.status}:</strong> {certificate.status || "unknown"}</p>
+                  <div style={{ margin: "18px auto", textAlign: "center" }}>
+                    <QRCodeSVG value={verificationUrl} size={180} />
+                    <p>{t.verify}</p>
+                  </div>
+                </div>
+              );
+            })}
+
+            <button style={styles.secondaryButton} onClick={() => setPage("home")}>{t.back}</button>
+          </section>
+        )}
+
+        {["results", "library"].includes(page) && (
+          <section style={styles.panel}>
+            <h2>{page === "results" ? t.results : t.library}</h2>
             <p>{t.empty}</p>
-            <button
-              style={styles.secondaryButton}
-              onClick={() => setPage("home")}
-            >
-              {t.back}
-            </button>
+            <button style={styles.secondaryButton} onClick={() => setPage("home")}>{t.back}</button>
           </section>
         )}
       </main>
 
-      <footer style={styles.footer}>
-        © 2026 Digital Learning Ethiopia
-      </footer>
+      <footer style={styles.footer}>© 2026 Digital Learning Ethiopia</footer>
     </div>
   );
 }
@@ -741,6 +695,14 @@ const styles = {
     cursor: "pointer",
     color: "#20332b",
     textAlign: "left"
+  },
+  certificateCard: {
+    border: "1px solid #dce8e1",
+    borderRadius: 12,
+    padding: 18,
+    margin: "15px 0",
+    background: "#f8fbf9",
+    overflowWrap: "anywhere"
   },
   secondaryButton: {
     ...buttonStyle,
