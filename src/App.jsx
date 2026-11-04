@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   onAuthStateChanged,
@@ -13,7 +14,9 @@ import {
   where,
   getDocs,
   doc,
-  getDoc
+  getDoc,
+  setDoc,
+  serverTimestamp
 } from "firebase/firestore";
 import { QRCodeSVG } from "qrcode.react";
 import { auth, db } from "./firebase";
@@ -21,23 +24,16 @@ import { auth, db } from "./firebase";
 const words = {
   am: {
     subtitle: "የዲጂታል ትምህርትና ሰርተፍኬት ስርዓት",
-    login: "ግባ",
-    register: "አዲስ መለያ ፍጠር",
-    name: "ሙሉ ስም",
-    email: "ኢሜይል",
-    password: "የይለፍ ቃል",
-    forgot: "የይለፍ ቃል ረሳሁ",
-    courses: "ትምህርቶች",
-    results: "ውጤቶች",
+    login: "ግባ", register: "አዲስ መለያ ፍጠር",
+    name: "ሙሉ ስም", email: "ኢሜይል",
+    password: "የይለፍ ቃል", forgot: "የይለፍ ቃል ረሳሁ",
+    courses: "ትምህርቶች", results: "ውጤቶች",
     certificates: "ሰርተፍኬቶች",
     library: "ዲጂታል ቤተ-መጻሕፍት",
-    logout: "ውጣ",
-    welcome: "እንኳን ወደ መማሪያ ስርዓታችን በደህና መጡ",
+    logout: "ውጣ", welcome: "እንኳን ወደ መማሪያ ስርዓታችን በደህና መጡ",
     categories: "የትምህርት ዘርፎች",
-    all: "ሁሉንም አሳይ",
-    back: "ተመለስ",
-    duration: "የትምህርት ጊዜ",
-    start: "ኮርሱን ክፈት",
+    all: "ሁሉንም አሳይ", back: "ተመለስ",
+    duration: "የትምህርት ጊዜ", start: "ኮርሱን ክፈት",
     empty: "በዚህ ክፍል ውስጥ መረጃ ገና አልተጨመረም።",
     loading: "እባክዎ ይጠብቁ...",
     noAccount: "መለያ የለዎትም?",
@@ -48,28 +44,19 @@ const words = {
     verify: "ሰርተፍኬት ማረጋገጫ",
     valid: "የተረጋገጠ ሰርተፍኬት",
     invalid: "ሰርተፍኬቱ አልተገኘም።",
-    status: "ሁኔታ",
-    course: "ኮርስ"
+    status: "ሁኔታ", course: "ኮርስ"
   },
   om: {
     subtitle: "Sirna Barnootaa fi Ragaa Dijitaalaa",
-    login: "Seeni",
-    register: "Herrega Haaraa Uumi",
-    name: "Maqaa Guutuu",
-    email: "Imeelii",
-    password: "Jecha Darbii",
-    forgot: "Jecha darbii dagadhe",
-    courses: "Koorsiiwwan",
-    results: "Bu'aa",
-    certificates: "Ragaa",
-    library: "Mana Kitaabaa Dijitaalaa",
-    logout: "Ba'i",
-    welcome: "Baga gara sirna barnootaa keenya dhuftan",
+    login: "Seeni", register: "Herrega Haaraa Uumi",
+    name: "Maqaa Guutuu", email: "Imeelii",
+    password: "Jecha Darbii", forgot: "Jecha darbii dagadhe",
+    courses: "Koorsiiwwan", results: "Bu'aa",
+    certificates: "Ragaa", library: "Mana Kitaabaa Dijitaalaa",
+    logout: "Ba'i", welcome: "Baga gara sirna barnootaa keenya dhuftan",
     categories: "Ramaddii Barnootaa",
-    all: "Hunda Agarsiisi",
-    back: "Duubatti",
-    duration: "Yeroo Barnootaa",
-    start: "Koorsii Bani",
+    all: "Hunda Agarsiisi", back: "Duubatti",
+    duration: "Yeroo Barnootaa", start: "Koorsii Bani",
     empty: "Kutaa kana keessatti odeeffannoon hin jiru.",
     loading: "Mee eeggadhaa...",
     noAccount: "Herrega hin qabduu?",
@@ -80,28 +67,19 @@ const words = {
     verify: "Ragaa Mirkaneessi",
     valid: "Ragaa Sirrii",
     invalid: "Ragaan hin argamne.",
-    status: "Haala",
-    course: "Koorsii"
+    status: "Haala", course: "Koorsii"
   },
   en: {
     subtitle: "Digital Learning and Certification System",
-    login: "Sign In",
-    register: "Create Account",
-    name: "Full Name",
-    email: "Email Address",
-    password: "Password",
-    forgot: "Forgot password?",
-    courses: "Courses",
-    results: "Results",
-    certificates: "Certificates",
-    library: "Digital Library",
-    logout: "Logout",
-    welcome: "Welcome to our learning platform",
+    login: "Sign In", register: "Create Account",
+    name: "Full Name", email: "Email Address",
+    password: "Password", forgot: "Forgot password?",
+    courses: "Courses", results: "Results",
+    certificates: "Certificates", library: "Digital Library",
+    logout: "Logout", welcome: "Welcome to our learning platform",
     categories: "Course Categories",
-    all: "Show All",
-    back: "Back",
-    duration: "Duration",
-    start: "Open Course",
+    all: "Show All", back: "Back",
+    duration: "Duration", start: "Open Course",
     empty: "No information has been added here yet.",
     loading: "Please wait...",
     noAccount: "Don't have an account?",
@@ -112,8 +90,7 @@ const words = {
     verify: "Certificate Verification",
     valid: "Verified Certificate",
     invalid: "Certificate not found.",
-    status: "Status",
-    course: "Course"
+    status: "Status", course: "Course"
   }
 };
 
@@ -172,22 +149,36 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  // Public QR verification: ?verify=CERTIFICATE_DOCUMENT_ID
+  // Ensure each registered student has a Firestore profile.
+  async function ensureStudentProfile(firebaseUser, fullName = "") {
+    const userRef = doc(db, "users", firebaseUser.uid);
+    const existing = await getDoc(userRef);
+
+    if (!existing.exists()) {
+      await setDoc(userRef, {
+        name: fullName || firebaseUser.displayName || "",
+        email: firebaseUser.email || "",
+        role: "student",
+        createdAt: serverTimestamp()
+      });
+    }
+  }
+
+  // Public QR verification reads only the public-safe collection.
   useEffect(() => {
     const certificateId = new URLSearchParams(window.location.search).get("verify");
-
     if (!certificateId) return;
 
     async function verifyCertificate() {
       setVerificationLoading(true);
       try {
-        const certificateRef = doc(db, "certificates", certificateId);
+        const certificateRef = doc(db, "certificatePublic", certificateId);
         const result = await getDoc(certificateRef);
 
         if (result.exists()) {
           const data = result.data();
           setVerification({
-            found: true,
+            found: data.status === "valid",
             publicName: data.publicName || "",
             certificateNumber: data.certificateNumber || "",
             courseTitle: data.courseTitle || "",
@@ -206,7 +197,6 @@ export default function App() {
     verifyCertificate();
   }, []);
 
-  // Load certificates belonging to the signed-in student.
   useEffect(() => {
     if (!user) {
       setCertificates([]);
@@ -221,13 +211,10 @@ export default function App() {
           where("userId", "==", user.uid)
         );
         const snapshot = await getDocs(certificateQuery);
-
-        setCertificates(
-          snapshot.docs.map((item) => ({
-            id: item.id,
-            ...item.data()
-          }))
-        );
+        setCertificates(snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data()
+        })));
       } catch (error) {
         setMessage("Certificate loading error: " + error.message);
       } finally {
@@ -248,24 +235,25 @@ export default function App() {
         if (password.length < 6) {
           throw new Error("Password must be at least 6 characters.");
         }
+        if (!name.trim()) {
+          throw new Error("Please enter your full name.");
+        }
 
         const result = await createUserWithEmailAndPassword(
-          auth,
-          email.trim(),
-          password
+          auth, email.trim(), password
         );
 
         await updateProfile(result.user, {
           displayName: name.trim()
         });
 
+        await ensureStudentProfile(result.user, name.trim());
         setUser(result.user);
       } else {
         const result = await signInWithEmailAndPassword(
-          auth,
-          email.trim(),
-          password
+          auth, email.trim(), password
         );
+        await ensureStudentProfile(result.user);
         setUser(result.user);
       }
 
@@ -312,6 +300,10 @@ export default function App() {
     (course) => category === null || course.category === category
   );
 
+  if (verificationLoading) {
+    return <div style={styles.center}><h2>{t.loading}</h2></div>;
+  }
+
   if (verification) {
     return (
       <div style={styles.app}>
@@ -330,18 +322,12 @@ export default function App() {
                 <p><strong>{t.status}:</strong> {verification.status}</p>
               </>
             ) : (
-              <p style={styles.error}>
-                {verification.error || t.invalid}
-              </p>
+              <p style={styles.error}>{verification.error || t.invalid}</p>
             )}
           </section>
         </main>
       </div>
     );
-  }
-
-  if (verificationLoading) {
-    return <div style={styles.center}><h2>{t.loading}</h2></div>;
   }
 
   if (!authReady) {
@@ -368,15 +354,11 @@ export default function App() {
             <button
               style={{ ...buttonStyle, background: mode === "login" ? "#075e48" : "#e8efec", color: mode === "login" ? "white" : "#24352f" }}
               onClick={() => { setMode("login"); setMessage(""); }}
-            >
-              {t.login}
-            </button>
+            >{t.login}</button>
             <button
               style={{ ...buttonStyle, background: mode === "register" ? "#075e48" : "#e8efec", color: mode === "register" ? "white" : "#24352f" }}
               onClick={() => { setMode("register"); setMessage(""); }}
-            >
-              {t.register}
-            </button>
+            >{t.register}</button>
           </div>
 
           <form onSubmit={handleSubmit} style={styles.form}>
@@ -412,7 +394,10 @@ export default function App() {
 
           <p style={{ textAlign: "center" }}>
             {mode === "login" ? t.noAccount : t.haveAccount}
-            <button style={styles.link} onClick={() => { setMode(mode === "login" ? "register" : "login"); setMessage(""); }}>
+            <button style={styles.link} onClick={() => {
+              setMode(mode === "login" ? "register" : "login");
+              setMessage("");
+            }}>
               {mode === "login" ? t.register : t.login}
             </button>
           </p>
@@ -451,7 +436,10 @@ export default function App() {
             <h2>{t.categories}</h2>
             <div style={styles.grid}>
               {categories.map((item) => (
-                <button key={item.id} style={styles.categoryCard} onClick={() => { setCategory(item.id); setPage("courses"); }}>
+                <button key={item.id} style={styles.categoryCard} onClick={() => {
+                  setCategory(item.id);
+                  setPage("courses");
+                }}>
                   <span style={{ fontSize: 30 }}>{item.icon}</span>
                   <strong>{item[language]}</strong>
                 </button>
@@ -465,7 +453,10 @@ export default function App() {
                 ["🏆", t.certificates, "certificates"],
                 ["📚", t.library, "library"]
               ].map(([icon, label, target]) => (
-                <button key={target} style={styles.menuCard} onClick={() => { setPage(target); setCategory(null); }}>
+                <button key={target} style={styles.menuCard} onClick={() => {
+                  setPage(target);
+                  setCategory(null);
+                }}>
                   <span style={{ fontSize: 28 }}>{icon}</span>
                   <strong>{label}</strong>
                 </button>
@@ -480,7 +471,10 @@ export default function App() {
             <button style={styles.secondaryButton} onClick={() => setCategory(null)}>{t.all}</button>
             {visibleCourses.length === 0 && <p>{t.empty}</p>}
             {visibleCourses.map((course) => (
-              <button key={course.id} style={styles.courseCard} onClick={() => { setSelectedCourse(course); setPage("course"); }}>
+              <button key={course.id} style={styles.courseCard} onClick={() => {
+                setSelectedCourse(course);
+                setPage("course");
+              }}>
                 <span style={{ fontSize: 28 }}>{course.icon}</span>
                 <span style={{ flex: 1, textAlign: "left" }}>
                   <strong>{course[language]}</strong>
@@ -506,12 +500,8 @@ export default function App() {
         {page === "certificates" && (
           <section style={styles.panel}>
             <h2>{t.certificates}</h2>
-
             {certificateLoading && <p>{t.loading}</p>}
-
-            {!certificateLoading && certificates.length === 0 && (
-              <p>{t.noCertificates}</p>
-            )}
+            {!certificateLoading && certificates.length === 0 && <p>{t.noCertificates}</p>}
 
             {certificates.map((certificate) => {
               const verificationUrl =
@@ -542,6 +532,8 @@ export default function App() {
             <button style={styles.secondaryButton} onClick={() => setPage("home")}>{t.back}</button>
           </section>
         )}
+
+        {message && <p style={styles.error}>{message}</p>}
       </main>
 
       <footer style={styles.footer}>© 2026 Digital Learning Ethiopia</footer>
