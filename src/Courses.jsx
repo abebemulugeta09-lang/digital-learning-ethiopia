@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import {
@@ -9,7 +10,8 @@ import {
   doc,
   serverTimestamp,
   query,
-  where
+  where,
+  writeBatch
 } from "firebase/firestore";
 
 import { db } from "./firebase";
@@ -227,6 +229,61 @@ function getCourseDescription(course, language) {
   return course.description || "";
 }
 
+// Bulk import text parser
+function parseBulkQuestions(text) {
+  const blocks = text
+    .trim()
+    .split(/\r?\n\s*\r?\n/)
+    .filter(block => block.trim());
+
+  if (!blocks.length) {
+    throw new Error("ምንም ጥያቄ አልተገኘም።");
+  }
+
+  return blocks.map((block, index) => {
+    const lines = block
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    function getValue(label) {
+      const line = lines.find(item =>
+        new RegExp("^" + label + "\\s*:", "i").test(item)
+      );
+
+      return line
+        ? line.replace(/^[^:]+:/, "").trim()
+        : "";
+    }
+
+    const question = getValue("Question");
+    const A = getValue("A");
+    const B = getValue("B");
+    const C = getValue("C");
+    const D = getValue("D");
+    const correctAnswer = getValue("Correct").toUpperCase();
+
+    if (
+      !question ||
+      !A ||
+      !B ||
+      !C ||
+      !D ||
+      !["A", "B", "C", "D"].includes(correctAnswer)
+    ) {
+      throw new Error(
+        `በጥያቄ ${index + 1} ላይ ስህተት አለ። Question, A, B, C, D እና Correct መሙላት አለባቸው።`
+      );
+    }
+
+    return {
+      question,
+      options: { A, B, C, D },
+      correctAnswer
+    };
+  });
+}
+
 export default function Courses({
   user,
   profile,
@@ -267,6 +324,11 @@ export default function Courses({
   const [optionC, setOptionC] = useState("");
   const [optionD, setOptionD] = useState("");
   const [correctAnswer, setCorrectAnswer] = useState("A");
+
+  // Bulk import states
+  const [bulkText, setBulkText] = useState("");
+  const [bulkQuestions, setBulkQuestions] = useState([]);
+  const [bulkError, setBulkError] = useState("");
 
   function clearCourseForm() {
     setCourseTitle("");
@@ -569,6 +631,90 @@ export default function Courses({
     }
   }
 
+  // Prepare bulk questions for preview
+  function previewBulkQuestions() {
+    setBulkError("");
+    setBulkQuestions([]);
+
+    try {
+      const parsed = parseBulkQuestions(bulkText);
+      setBulkQuestions(parsed);
+    } catch (error) {
+      setBulkError(error.message || t.error);
+    }
+  }
+
+  // Import all previewed questions in one Firestore batch
+  async function importBulkQuestions() {
+    if (!admin || !user || !selected) {
+      setBulkError(t.adminOnly);
+      return;
+    }
+
+    if (!bulkQuestions.length) {
+      setBulkError("ከመጀመሪያ Preview አድርግ።");
+      return;
+    }
+
+    if (bulkQuestions.length > 450) {
+      setBulkError("በአንድ ጊዜ ከ450 በላይ ጥያቄዎችን ማስገባት አይቻልም።");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `${bulkQuestions.length} ጥያቄዎችን ወደዚህ ኮርስ ማስገባት ትፈልጋለህ?`
+    );
+
+    if (!confirmed) return;
+
+    setSaving(true);
+    setBulkError("");
+    setMessage("");
+
+    try {
+      const batch = writeBatch(db);
+
+      bulkQuestions.forEach(item => {
+        const questionRef = doc(
+          collection(db, "courses", selected.id, "questions")
+        );
+
+        batch.set(questionRef, {
+          question: item.question,
+          options: item.options,
+          correctAnswer: item.correctAnswer,
+          createdBy: user.uid,
+          createdAt: serverTimestamp()
+        });
+      });
+
+      await batch.commit();
+
+      const snapshot = await getDocs(
+        collection(db, "courses", selected.id, "questions")
+      );
+
+      setQuestions(
+        snapshot.docs.map(item => ({
+          id: item.id,
+          ...item.data()
+        }))
+      );
+
+      const importedCount = bulkQuestions.length;
+
+      setBulkText("");
+      setBulkQuestions([]);
+      setMessage(
+        `${importedCount} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል።`
+      );
+    } catch (error) {
+      setBulkError(error.message || t.error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function removeQuestion(questionId) {
     if (!admin || !selected) return;
     if (!window.confirm(t.confirmDelete)) return;
@@ -691,6 +837,9 @@ export default function Courses({
     setMessage("");
     setView("courses");
     setSelected(null);
+    setBulkText("");
+    setBulkQuestions([]);
+    setBulkError("");
     clearCourseForm();
   }
 
@@ -944,6 +1093,7 @@ export default function Courses({
           {admin && (
             <>
               <hr />
+
               <h3>{t.adminQuestions}</h3>
 
               {questions.length === 0 && <p>{t.noQuestions}</p>}
@@ -979,6 +1129,156 @@ export default function Courses({
                 </article>
               ))}
 
+              {/* BULK IMPORT SECTION */}
+              <div style={{
+                border: "2px solid #2563eb",
+                background: "#f5f8ff",
+                color: "#172554",
+                padding: "18px",
+                margin: "25px 0",
+                borderRadius: "12px"
+              }}>
+                <h3>📥 Bulk Import Questions</h3>
+
+                <p>
+                  ብዙ የፈተና ጥያቄዎችን በአንድ ጊዜ Copy & Paste አድርግ።
+                  ከዚያ Preview አድርገህ ከመረመርክ በኋላ Import All ተጫን።
+                </p>
+
+                <textarea
+                  value={bulkText}
+                  onChange={e => {
+                    setBulkText(e.target.value);
+                    setBulkQuestions([]);
+                    setBulkError("");
+                  }}
+                  placeholder={`Question: አመራር ምን ማለት ነው?
+A: ሌሎችን በግድ ማዘዝ
+B: ሰዎችን ወደ ጋራ ግብ መምራት
+C: የግል ጥቅምን ማስቀደም
+D: ውሳኔን ብቻውን መወሰን
+Correct: B
+
+Question: ጥሩ መሪ ምን ማሳየት አለበት?
+A: ታማኝነት
+B: አለመስማት
+C: አለመተባበር
+D: አለመጠያቀቅ
+Correct: A`}
+                  rows={14}
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "12px",
+                    border: "1px solid #94a3b8",
+                    borderRadius: "8px",
+                    fontSize: "15px",
+                    marginBottom: "12px",
+                    background: "#ffffff",
+                    color: "#111827"
+                  }}
+                />
+
+                <div style={{
+                  display: "flex",
+                  gap: "10px",
+                  flexWrap: "wrap"
+                }}>
+                  <button
+                    type="button"
+                    onClick={previewBulkQuestions}
+                    disabled={saving || !bulkText.trim()}
+                  >
+                    👁 Preview Questions
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkText("");
+                      setBulkQuestions([]);
+                      setBulkError("");
+                    }}
+                    disabled={saving}
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                {bulkError && (
+                  <p role="alert" style={{
+                    color: "#b91c1c",
+                    background: "#fee2e2",
+                    padding: "10px",
+                    borderRadius: "6px",
+                    overflowWrap: "anywhere"
+                  }}>
+                    {bulkError}
+                  </p>
+                )}
+
+                {bulkQuestions.length > 0 && (
+                  <div style={{ marginTop: "20px" }}>
+                    <h4>
+                      <span style={{ color: "#15803d" }}>
+                        ✓ Preview ready
+                      </span>
+                    </h4>
+
+                    <p>
+                      በአጠቃላይ {bulkQuestions.length} ጥያቄዎች ተዘጋጅተዋል።
+                    </p>
+
+                    {bulkQuestions.map((item, index) => (
+                      <article
+                        key={index}
+                        style={{
+                          background: "#ffffff",
+                          color: "#111827",
+                          border: "1px solid #cbd5e1",
+                          padding: "12px",
+                          marginBottom: "10px",
+                          borderRadius: "8px"
+                        }}
+                      >
+                        <strong>
+                          {index + 1}. {item.question}
+                        </strong>
+
+                        {Object.entries(item.options).map(([key, value]) => (
+                          <p key={key}>{key}. {value}</p>
+                        ))}
+
+                        <p>
+                          <strong>
+                            Correct Answer: {item.correctAnswer}
+                          </strong>
+                        </p>
+                      </article>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={importBulkQuestions}
+                      disabled={saving}
+                      style={{
+                        background: "#15803d",
+                        color: "#ffffff",
+                        padding: "12px 20px",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontWeight: "bold"
+                      }}
+                    >
+                      {saving
+                        ? "በመመዝገብ ላይ..."
+                        : `✓ Import All ${bulkQuestions.length} Questions`}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* SINGLE QUESTION FORM */}
               <form onSubmit={addQuestion}>
                 <h3>{t.addQuestion}</h3>
 
