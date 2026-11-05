@@ -1,10 +1,20 @@
+
 * {
   box-sizing: border-box;
 }
 
+:root {
+  font-family: Arial, "Noto Sans Ethiopic", sans-serif;
+  color: #172033;
+  background: #f3f6fb;
+  font-synthesis: none;
+}
+
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: Arial, "Noto Sans Ethiopic", sans-serif;
   background: #f3f6fb;
   color: #172033;
 }
@@ -23,10 +33,18 @@ button {
   color: white;
   cursor: pointer;
   margin: 5px;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 button:hover {
   background: #0d3d91;
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 input,
@@ -37,6 +55,14 @@ select {
   border: 1px solid #ccd5e2;
   border-radius: 9px;
   background: white;
+  color: #172033;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: #1455c0;
+  box-shadow: 0 0 0 3px rgba(20, 85, 192, 0.12);
 }
 
 .auth-page {
@@ -66,16 +92,31 @@ select {
   text-align: center;
 }
 
-.auth-card form button {
+.auth-card form button[type="submit"] {
   width: 100%;
   margin: 12px 0;
+}
+
+.password-field {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.password-field input {
+  flex: 1;
+  min-width: 0;
+}
+
+.password-field button {
+  flex-shrink: 0;
 }
 
 .app {
   min-height: 100vh;
 }
 
-header {
+.app-header {
   background: #0b2e66;
   color: white;
   padding: 20px;
@@ -86,18 +127,33 @@ header {
   flex-wrap: wrap;
 }
 
-header select {
-  width: auto;
-  min-width: 130px;
+.app-header h1 {
+  margin: 0;
+  font-size: 24px;
 }
 
-nav {
+.app-header select {
+  width: auto;
+  min-width: 140px;
+}
+
+.main-nav {
   background: white;
   padding: 12px;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.main-nav button {
+  background: #edf3fc;
+  color: #174477;
+}
+
+.main-nav button.active {
+  background: #1455c0;
+  color: white;
 }
 
 .content {
@@ -110,6 +166,70 @@ nav {
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
 }
 
+.dashboard,
+.admin-panel,
+.results-page,
+.certificates-page {
+  width: 100%;
+}
+
+.dashboard h2,
+.admin-panel h2,
+.results-page h2,
+.certificates-page h2 {
+  color: #123d78;
+}
+
+.dashboard-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.result-card,
+.certificate-card {
+  background: #f8faff;
+  border: 1px solid #dce6f4;
+  border-radius: 14px;
+  padding: 20px;
+  margin: 15px 0;
+}
+
+.result-card h3 {
+  color: #174477;
+}
+
+.passed {
+  color: #13803d;
+  font-weight: bold;
+}
+
+.failed {
+  color: #c62828;
+  font-weight: bold;
+}
+
+.certificate-card {
+  border: 2px solid #c6a34a;
+  text-align: center;
+  padding: 25px;
+}
+
+.certificate-content {
+  border: 1px solid #e2c779;
+  padding: 20px;
+  background: white;
+}
+
+.certificate-content h2 {
+  color: #174477;
+}
+
+.certificate-content h3 {
+  color: #9b7621;
+}
+
 .loading {
   min-height: 100vh;
   display: grid;
@@ -119,16 +239,21 @@ nav {
 }
 
 @media (max-width: 600px) {
-  header {
+  .app-header {
     flex-direction: column;
     align-items: stretch;
   }
 
-  header select {
+  .app-header h1 {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .app-header select {
     width: 100%;
   }
 
-  nav button {
+  .main-nav button {
     flex: 1 1 40%;
   }
 
@@ -139,5 +264,42 @@ nav {
 
   .auth-card {
     padding: 22px;
+  }
+
+  .password-field {
+    flex-wrap: wrap;
+  }
+
+  .password-field button {
+    width: 100%;
+  }
+
+  .dashboard-links button {
+    flex: 1 1 100%;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .app-header,
+  .main-nav,
+  .certificates-page > h2,
+  .certificate-card > button {
+    display: none !important;
+  }
+
+  .content {
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .certificate-card {
+    page-break-inside: avoid;
+    border: 3px solid #c6a34a;
+    margin: 20px;
   }
 }
