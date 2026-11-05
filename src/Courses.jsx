@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 import {
@@ -19,8 +18,8 @@ const words = {
   am: {
     courses: "ትምህርቶች",
     addCourse: "አዲስ ትምህርት ጨምር",
-    title: "የትምህርት ርዕስ",
-    description: "የትምህርት መግለጫ",
+    title: "የአማርኛ ትምህርት ርዕስ",
+    description: "የአማርኛ ትምህርት መግለጫ",
     titleEn: "የእንግሊዝኛ ርዕስ",
     descriptionEn: "የእንግሊዝኛ መግለጫ",
     titleOm: "የአፋን ኦሮሞ ርዕስ",
@@ -28,7 +27,8 @@ const words = {
     save: "አስቀምጥ",
     update: "አስተካክል",
     edit: "አርም",
-    delete: "ሰርዝ",
+    delete: "አስወግድ",
+    archive: "ወደ ማህደር አስገባ",
     cancel: "ተወው",
     open: "ክፈት",
     back: "ተመለስ",
@@ -39,7 +39,6 @@ const words = {
     content: "የትምህርት ይዘት",
     addLesson: "ክፍል ጨምር",
     noLessons: "ምንም የትምህርት ክፍል የለም።",
-    exam: "ፈተና",
     questions: "የፈተና ጥያቄዎች",
     addQuestion: "ጥያቄ ጨምር",
     question: "የፈተና ጥያቄ",
@@ -49,34 +48,32 @@ const words = {
     optionD: "ምርጫ D",
     correct: "ትክክለኛ መልስ",
     passing: "የማለፊያ ነጥብ (%)",
-    startExam: "ፈተና ጀምር",
-    submitExam: "ፈተናውን አስገባ",
-    selectAnswer: "መልስ ምረጥ",
-    noQuestions: "የፈተና ጥያቄዎች ገና አልተዘጋጁም።",
+    myResults: "የእኔ ውጤቶች",
+    noResults: "የፈተና ውጤት አልተገኘም።",
     result: "የፈተና ውጤት",
     score: "ያገኘኸው ነጥብ",
     passed: "አልፈሃል",
     failed: "አላለፍክም",
-    certificate: "ሰርተፍኬት",
-    certificateReady: "ሰርተፍኬትህ ተመዝግቧል።",
-    noCertificate: "የማለፊያ ነጥቡን ስላላሟላህ ሰርተፍኬት አልተሰጠም።",
-    myResults: "የእኔ ውጤቶች",
-    noResults: "የፈተና ውጤት አልተገኘም።",
-    confirmDelete: "ይህን ነገር መሰረዝ ትፈልጋለህ?",
-    confirmSubmit: "ፈተናውን ማስገባት ትፈልጋለህ?",
-    added: "ተጨምሯል።",
-    updated: "ተስተካክሏል።",
-    deleted: "ተሰርዟል።",
-    error: "ስህተት ተፈጥሯል።",
-    required: "እባክህ ሁሉንም አስፈላጊ መረጃዎች ሙላ።",
-    questionNumber: "ጥያቄ",
-    correctCount: "ትክክለኛ መልሶች",
-    totalQuestions: "ጠቅላላ ጥያቄዎች",
+    certificate: "ሰርተፊኬት",
     student: "ተማሪ",
     date: "ቀን",
-    adminOnly: "ይህን ለማድረግ የአስተዳዳሪ ፈቃድ ያስፈልጋል።",
+    correctCount: "ትክክለኛ መልሶች",
+    totalQuestions: "ጠቅላላ ጥያቄዎች",
+    confirmDelete: "ይህን ነገር ማስወገድ ትፈልጋለህ?",
+    confirmArchive: "ይህን ኮርስ ወደ ማህደር ማስገባት ትፈልጋለህ?",
+    added: "ተጨምሯል።",
+    updated: "ተስተካክሏል።",
+    deleted: "ተወግዷል።",
+    archived: "ወደ ማህደር ገብቷል።",
+    error: "ስህተት ተፈጥሯል።",
+    required: "እባክህ አስፈላጊውን መረጃ ሙላ።",
+    adminOnly: "የአስተዳዳሪ ፈቃድ ያስፈልጋል።",
     noName: "ተማሪ",
-    retry: "እንደገና ሞክር"
+    retry: "እንደገና ሞክር",
+    secureExam: "ፈተናው በደህንነት ምክንያት ለጊዜው ተዘግቷል።",
+    adminQuestions: "የአስተዳዳሪ የጥያቄ አስተዳደር",
+    noQuestions: "ጥያቄዎች አልተጨመሩም።",
+    archivedList: "የተመዘገቡ ኮርሶች"
   },
 
   en: {
@@ -91,7 +88,8 @@ const words = {
     save: "Save",
     update: "Update",
     edit: "Edit",
-    delete: "Delete",
+    delete: "Remove",
+    archive: "Archive Course",
     cancel: "Cancel",
     open: "Open",
     back: "Back",
@@ -102,7 +100,6 @@ const words = {
     content: "Lesson Content",
     addLesson: "Add Lesson",
     noLessons: "No lessons available.",
-    exam: "Exam",
     questions: "Exam Questions",
     addQuestion: "Add Question",
     question: "Exam Question",
@@ -112,34 +109,32 @@ const words = {
     optionD: "Option D",
     correct: "Correct Answer",
     passing: "Passing Score (%)",
-    startExam: "Start Exam",
-    submitExam: "Submit Exam",
-    selectAnswer: "Select an answer",
-    noQuestions: "No exam questions have been added yet.",
+    myResults: "My Results",
+    noResults: "No exam results found.",
     result: "Exam Result",
     score: "Your Score",
     passed: "Passed",
     failed: "Failed",
     certificate: "Certificate",
-    certificateReady: "Your certificate has been recorded.",
-    noCertificate: "You did not meet the passing score. No certificate was issued.",
-    myResults: "My Results",
-    noResults: "No exam results found.",
-    confirmDelete: "Are you sure you want to delete this item?",
-    confirmSubmit: "Are you sure you want to submit your exam?",
-    added: "Added successfully.",
-    updated: "Updated successfully.",
-    deleted: "Deleted successfully.",
-    error: "An error occurred.",
-    required: "Please complete all required fields.",
-    questionNumber: "Question",
-    correctCount: "Correct Answers",
-    totalQuestions: "Total Questions",
     student: "Student",
     date: "Date",
+    correctCount: "Correct Answers",
+    totalQuestions: "Total Questions",
+    confirmDelete: "Are you sure you want to remove this item?",
+    confirmArchive: "Are you sure you want to archive this course?",
+    added: "Added successfully.",
+    updated: "Updated successfully.",
+    deleted: "Removed successfully.",
+    archived: "Course archived successfully.",
+    error: "An error occurred.",
+    required: "Please complete all required fields.",
     adminOnly: "Administrator permission is required.",
     noName: "Student",
-    retry: "Try again"
+    retry: "Retry",
+    secureExam: "Exams are temporarily unavailable while secure exam services are being configured.",
+    adminQuestions: "Administrator Question Management",
+    noQuestions: "No questions have been added.",
+    archivedList: "Archived courses"
   },
 
   om: {
@@ -155,6 +150,7 @@ const words = {
     update: "Fooyyessi",
     edit: "Fooyyessi",
     delete: "Haqi",
+    archive: "Kuusaa keessa kaa'i",
     cancel: "Dhiisi",
     open: "Bani",
     back: "Deebi'i",
@@ -165,7 +161,6 @@ const words = {
     content: "Qabiyyee barnootaa",
     addLesson: "Kutaa dabali",
     noLessons: "Kutaan barnootaa hin jiru.",
-    exam: "Qormaata",
     questions: "Gaaffilee qormaataa",
     addQuestion: "Gaaffii dabali",
     question: "Gaaffii qormaataa",
@@ -175,34 +170,32 @@ const words = {
     optionD: "Filannoo D",
     correct: "Deebii sirrii",
     passing: "Qabxii darbuuf (%)",
-    startExam: "Qormaata jalqabi",
-    submitExam: "Qormaata galchi",
-    selectAnswer: "Deebii filadhu",
-    noQuestions: "Gaaffileen qormaataa hin dabalamin.",
+    myResults: "Bu'aawwan koo",
+    noResults: "Bu'aan qormaataa hin argamne.",
     result: "Bu'aa qormaataa",
     score: "Qabxii kee",
     passed: "Darbiteetta",
     failed: "Hin darbine",
     certificate: "Ragaa",
-    certificateReady: "Ragaan kee galmaa'eera.",
-    noCertificate: "Qabxii darbuu waan hin guunneef ragaan hin kennamne.",
-    myResults: "Bu'aawwan koo",
-    noResults: "Bu'aan qormaataa hin argamne.",
+    student: "Barataa",
+    date: "Guyyaa",
+    correctCount: "Deebii sirrii",
+    totalQuestions: "Gaaffilee waliigalaa",
     confirmDelete: "Wanta kana haquu barbaaddaa?",
-    confirmSubmit: "Qormaata galchuu barbaaddaa?",
+    confirmArchive: "Barnoota kana kuusaa keessa kaa'uu barbaaddaa?",
     added: "Milkaa'inaan dabalameera.",
     updated: "Milkaa'inaan fooyya'eera.",
     deleted: "Milkaa'inaan haqameera.",
+    archived: "Kuusaa keessa galfameera.",
     error: "Dogoggorri uumameera.",
-    required: "Maaloo odeeffannoo barbaachisaa hunda guuti.",
-    questionNumber: "Gaaffii",
-    correctCount: "Deebii sirrii",
-    totalQuestions: "Gaaffilee waliigalaa",
-    student: "Barataa",
-    date: "Guyyaa",
+    required: "Maaloo odeeffannoo barbaachisaa guuti.",
     adminOnly: "Eeyyamni bulchiinsaa barbaachisa.",
     noName: "Barataa",
-    retry: "Irra deebi'i"
+    retry: "Irra deebi'i",
+    secureExam: "Qormaanni yeroo ammaa nageenyaaf cufameera.",
+    adminQuestions: "Bulchiinsa gaaffilee",
+    noQuestions: "Gaaffileen hin dabalamin.",
+    archivedList: "Barnoota kuusaa keessa jiru"
   }
 };
 
@@ -253,9 +246,10 @@ export default function Courses({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
+  const [showArchived, setShowArchived] = useState(false);
+
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
-
   const [courseTitleEn, setCourseTitleEn] = useState("");
   const [courseDescriptionEn, setCourseDescriptionEn] = useState("");
   const [courseTitleOm, setCourseTitleOm] = useState("");
@@ -273,9 +267,6 @@ export default function Courses({
   const [optionC, setOptionC] = useState("");
   const [optionD, setOptionD] = useState("");
   const [correctAnswer, setCorrectAnswer] = useState("A");
-
-  const [answers, setAnswers] = useState({});
-  const [lastResult, setLastResult] = useState(null);
 
   function clearCourseForm() {
     setCourseTitle("");
@@ -295,12 +286,12 @@ export default function Courses({
     try {
       const snapshot = await getDocs(collection(db, "courses"));
 
-      setCourses(
-        snapshot.docs.map(item => ({
-          id: item.id,
-          ...item.data()
-        }))
-      );
+      const list = snapshot.docs.map(item => ({
+        id: item.id,
+        ...item.data()
+      }));
+
+      setCourses(list);
     } catch (error) {
       setMessage(error.message || t.error);
     } finally {
@@ -312,7 +303,7 @@ export default function Courses({
     loadCourses();
   }, []);
 
-  async function addCourse(event) {
+  async function saveCourse(event) {
     event.preventDefault();
 
     if (!admin || !user) {
@@ -339,35 +330,55 @@ export default function Courses({
     setSaving(true);
     setMessage("");
 
+    const data = {
+      title: courseTitle.trim(),
+      description: courseDescription.trim(),
+      titleEn: courseTitleEn.trim(),
+      descriptionEn: courseDescriptionEn.trim(),
+      titleOm: courseTitleOm.trim(),
+      descriptionOm: courseDescriptionOm.trim(),
+      passingScore: score,
+      isArchived: false,
+      updatedAt: serverTimestamp()
+    };
+
     try {
-      const data = {
-        title: courseTitle.trim(),
-        description: courseDescription.trim(),
+      if (editingCourse) {
+        await updateDoc(
+          doc(db, "courses", editingCourse.id),
+          data
+        );
 
-        titleEn: courseTitleEn.trim(),
-        descriptionEn: courseDescriptionEn.trim(),
+        setCourses(previous =>
+          previous.map(course =>
+            course.id === editingCourse.id
+              ? { ...course, ...data }
+              : course
+          )
+        );
 
-        titleOm: courseTitleOm.trim(),
-        descriptionOm: courseDescriptionOm.trim(),
+        setMessage(t.updated);
+      } else {
+        const newData = {
+          ...data,
+          createdBy: user.uid,
+          createdAt: serverTimestamp()
+        };
 
-        passingScore: score,
-        createdBy: user.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
+        const result = await addDoc(
+          collection(db, "courses"),
+          newData
+        );
 
-      const result = await addDoc(collection(db, "courses"), data);
+        setCourses(previous => [
+          ...previous,
+          { id: result.id, ...newData }
+        ]);
 
-      setCourses(previous => [
-        ...previous,
-        {
-          id: result.id,
-          ...data
-        }
-      ]);
+        setMessage(t.added);
+      }
 
       clearCourseForm();
-      setMessage(t.added);
     } catch (error) {
       setMessage(error.message || t.error);
     } finally {
@@ -380,71 +391,14 @@ export default function Courses({
 
     setCourseTitle(course.title || "");
     setCourseDescription(course.description || "");
-
     setCourseTitleEn(course.titleEn || "");
     setCourseDescriptionEn(course.descriptionEn || "");
-
     setCourseTitleOm(course.titleOm || "");
     setCourseDescriptionOm(course.descriptionOm || "");
-
     setPassingScore(String(course.passingScore ?? 70));
+
     setMessage("");
-  }
-
-  async function updateCourse(event) {
-    event.preventDefault();
-
-    if (!admin || !editingCourse) return;
-
-    const score = Number(passingScore);
-
-    if (
-      !courseTitle.trim() ||
-      !courseTitleEn.trim() ||
-      !courseTitleOm.trim() ||
-      !Number.isFinite(score) ||
-      score < 1 ||
-      score > 100
-    ) {
-      setMessage(t.required);
-      return;
-    }
-
-    setSaving(true);
-    setMessage("");
-
-    try {
-      const data = {
-        title: courseTitle.trim(),
-        description: courseDescription.trim(),
-
-        titleEn: courseTitleEn.trim(),
-        descriptionEn: courseDescriptionEn.trim(),
-
-        titleOm: courseTitleOm.trim(),
-        descriptionOm: courseDescriptionOm.trim(),
-
-        passingScore: score,
-        updatedAt: serverTimestamp()
-      };
-
-      await updateDoc(doc(db, "courses", editingCourse.id), data);
-
-      setCourses(previous =>
-        previous.map(course =>
-          course.id === editingCourse.id
-            ? { ...course, ...data }
-            : course
-        )
-      );
-
-      clearCourseForm();
-      setMessage(t.updated);
-    } catch (error) {
-      setMessage(error.message || t.error);
-    } finally {
-      setSaving(false);
-    }
+    setView("courses");
   }
 
   async function openCourse(course) {
@@ -456,10 +410,6 @@ export default function Courses({
         collection(db, "courses", course.id, "lessons")
       );
 
-      const questionSnapshot = await getDocs(
-        collection(db, "courses", course.id, "questions")
-      );
-
       setLessons(
         lessonSnapshot.docs.map(item => ({
           id: item.id,
@@ -467,16 +417,23 @@ export default function Courses({
         }))
       );
 
-      setQuestions(
-        questionSnapshot.docs.map(item => ({
-          id: item.id,
-          ...item.data()
-        }))
-      );
+      // Correct answers are never downloaded to student devices.
+      if (admin) {
+        const questionSnapshot = await getDocs(
+          collection(db, "courses", course.id, "questions")
+        );
+
+        setQuestions(
+          questionSnapshot.docs.map(item => ({
+            id: item.id,
+            ...item.data()
+          }))
+        );
+      } else {
+        setQuestions([]);
+      }
 
       setSelected(course);
-      setAnswers({});
-      setLastResult(null);
       setView("course");
     } catch (error) {
       setMessage(error.message || t.error);
@@ -488,7 +445,10 @@ export default function Courses({
   async function addLesson(event) {
     event.preventDefault();
 
-    if (!admin || !user || !selected) return;
+    if (!admin || !user || !selected) {
+      setMessage(t.adminOnly);
+      return;
+    }
 
     if (!lessonTitle.trim() || !lessonContent.trim()) {
       setMessage(t.required);
@@ -552,7 +512,10 @@ export default function Courses({
   async function addQuestion(event) {
     event.preventDefault();
 
-    if (!admin || !user || !selected) return;
+    if (!admin || !user || !selected) {
+      setMessage(t.adminOnly);
+      return;
+    }
 
     const options = {
       A: optionA.trim(),
@@ -629,99 +592,61 @@ export default function Courses({
     }
   }
 
-  function startExam() {
-    if (questions.length === 0) {
-      setMessage(t.noQuestions);
-      return;
-    }
-
-    setAnswers({});
-    setLastResult(null);
-    setMessage("");
-    setView("exam");
-  }
-
-  async function submitExam(event) {
-    event.preventDefault();
-
-    if (!user || !selected || questions.length === 0) return;
-
-    if (questions.some(question => !answers[question.id])) {
-      setMessage(t.required);
-      return;
-    }
-
-    if (!window.confirm(t.confirmSubmit)) return;
+  async function archiveCourse(courseId) {
+    if (!admin) return;
+    if (!window.confirm(t.confirmArchive)) return;
 
     setSaving(true);
     setMessage("");
 
     try {
-      let correctCount = 0;
-
-      questions.forEach(question => {
-        if (answers[question.id] === question.correctAnswer) {
-          correctCount++;
-        }
+      await updateDoc(doc(db, "courses", courseId), {
+        isArchived: true,
+        updatedAt: serverTimestamp()
       });
 
-      const total = questions.length;
-      const score = Math.round((correctCount / total) * 100);
-      const requiredScore = Number(selected.passingScore ?? 70);
-      const passed = score >= requiredScore;
-
-      const resultData = {
-        userId: user.uid,
-        studentName:
-          profile?.name ||
-          user.displayName ||
-          user.email ||
-          t.noName,
-        courseId: selected.id,
-        courseTitle: getCourseTitle(selected, language),
-        totalQuestions: total,
-        correctAnswers: correctCount,
-        score,
-        passingScore: requiredScore,
-        passed,
-        answers,
-        createdAt: serverTimestamp()
-      };
-
-      const resultRef = await addDoc(
-        collection(db, "results"),
-        resultData
+      setCourses(previous =>
+        previous.map(course =>
+          course.id === courseId
+            ? { ...course, isArchived: true }
+            : course
+        )
       );
 
-      let certificateId = null;
-
-      if (passed) {
-        const certificateData = {
-          userId: user.uid,
-          studentName: resultData.studentName,
-          courseId: selected.id,
-          courseTitle: resultData.courseTitle,
-          resultId: resultRef.id,
-          score,
-          certificateStatus: "issued",
-          createdAt: serverTimestamp()
-        };
-
-        const certificateRef = await addDoc(
-          collection(db, "certificates"),
-          certificateData
-        );
-
-        certificateId = certificateRef.id;
+      if (selected?.id === courseId) {
+        setSelected(null);
+        setView("courses");
       }
 
-      setLastResult({
-        ...resultData,
-        id: resultRef.id,
-        certificateId
+      setMessage(t.archived);
+    } catch (error) {
+      setMessage(error.message || t.error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function restoreCourse(courseId) {
+    if (!admin) return;
+
+    setSaving(true);
+    setMessage("");
+
+    try {
+      await updateDoc(doc(db, "courses", courseId), {
+        isArchived: false,
+        updatedAt: serverTimestamp()
       });
 
-      setView("result");
+      setCourses(previous =>
+        previous.map(course =>
+          course.id === courseId
+            ? { ...course, isArchived: false }
+            : course
+        )
+      );
+
+      setMessage(t.updated);
     } catch (error) {
       setMessage(error.message || t.error);
     } finally {
@@ -748,11 +673,10 @@ export default function Courses({
         ...item.data()
       }));
 
-      list.sort((a, b) => {
-        const dateA = a.createdAt?.seconds || 0;
-        const dateB = b.createdAt?.seconds || 0;
-        return dateB - dateA;
-      });
+      list.sort((a, b) =>
+        (b.createdAt?.seconds || 0) -
+        (a.createdAt?.seconds || 0)
+      );
 
       setResults(list);
       setView("results");
@@ -763,61 +687,18 @@ export default function Courses({
     }
   }
 
-  async function removeCourse(courseId) {
-    if (!admin) return;
-    if (!window.confirm(t.confirmDelete)) return;
-
-    setSaving(true);
-    setMessage("");
-
-    try {
-      const lessonSnapshot = await getDocs(
-        collection(db, "courses", courseId, "lessons")
-      );
-
-      const questionSnapshot = await getDocs(
-        collection(db, "courses", courseId, "questions")
-      );
-
-      for (const item of lessonSnapshot.docs) {
-        await deleteDoc(
-          doc(db, "courses", courseId, "lessons", item.id)
-        );
-      }
-
-      for (const item of questionSnapshot.docs) {
-        await deleteDoc(
-          doc(db, "courses", courseId, "questions", item.id)
-        );
-      }
-
-      await deleteDoc(doc(db, "courses", courseId));
-
-      setCourses(previous =>
-        previous.filter(course => course.id !== courseId)
-      );
-
-      if (selected?.id === courseId) {
-        setSelected(null);
-        setView("courses");
-      }
-
-      setMessage(t.deleted);
-    } catch (error) {
-      setMessage(error.message || t.error);
-    } finally {
-      setSaving(false);
-    }
-  }
-
   function goBack() {
     setMessage("");
     setView("courses");
     setSelected(null);
-    setLastResult(null);
-    setAnswers({});
     clearCourseForm();
   }
+
+  const visibleCourses = courses.filter(course =>
+    showArchived
+      ? course.isArchived === true
+      : course.isArchived !== true
+  );
 
   if (loading) {
     return (
@@ -859,7 +740,7 @@ export default function Courses({
 
           {admin && (
             <form
-              onSubmit={editingCourse ? updateCourse : addCourse}
+              onSubmit={saveCourse}
               style={{ marginBottom: "25px" }}
             >
               <h3>
@@ -936,9 +817,20 @@ export default function Courses({
             </form>
           )}
 
-          {courses.length === 0 && <p>{t.empty}</p>}
+          {admin && (
+            <div style={{ marginBottom: "15px" }}>
+              <button
+                type="button"
+                onClick={() => setShowArchived(value => !value)}
+              >
+                {showArchived ? t.courses : t.archivedList}
+              </button>
+            </div>
+          )}
 
-          {courses.map(course => (
+          {visibleCourses.length === 0 && <p>{t.empty}</p>}
+
+          {visibleCourses.map(course => (
             <article
               key={course.id}
               style={{
@@ -959,19 +851,28 @@ export default function Courses({
                 {t.open}
               </button>
 
-              {admin && (
+              {admin && !showArchived && (
                 <>
                   <button onClick={() => startEditCourse(course)}>
                     {t.edit}
                   </button>
 
                   <button
-                    onClick={() => removeCourse(course.id)}
+                    onClick={() => archiveCourse(course.id)}
                     disabled={saving}
                   >
-                    {t.delete}
+                    {t.archive}
                   </button>
                 </>
+              )}
+
+              {admin && showArchived && (
+                <button
+                  onClick={() => restoreCourse(course.id)}
+                  disabled={saving}
+                >
+                  {t.update}
+                </button>
               )}
             </article>
           ))}
@@ -1040,203 +941,111 @@ export default function Courses({
             </form>
           )}
 
-          <hr />
+          {admin && (
+            <>
+              <hr />
+              <h3>{t.adminQuestions}</h3>
 
-          <h3>{t.questions}</h3>
+              {questions.length === 0 && <p>{t.noQuestions}</p>}
 
-          {questions.length === 0 && <p>{t.noQuestions}</p>}
+              {questions.map((item, index) => (
+                <article
+                  key={item.id}
+                  style={{
+                    border: "1px solid #ddd",
+                    padding: "12px",
+                    marginBottom: "10px",
+                    borderRadius: "8px"
+                  }}
+                >
+                  <strong>
+                    {index + 1}. {item.question}
+                  </strong>
 
-          {questions.map((item, index) => (
-            <article
-              key={item.id}
-              style={{
-                border: "1px solid #ddd",
-                padding: "12px",
-                marginBottom: "10px",
-                borderRadius: "8px"
-              }}
-            >
-              <strong>
-                {t.questionNumber} {index + 1}: {item.question}
-              </strong>
+                  {Object.entries(item.options || {}).map(([key, value]) => (
+                    <p key={key}>{key}. {value}</p>
+                  ))}
 
-              {Object.entries(item.options || {}).map(([key, value]) => (
-                <p key={key}>{key}. {value}</p>
+                  <p>
+                    {t.correct}: {item.correctAnswer}
+                  </p>
+
+                  <button
+                    onClick={() => removeQuestion(item.id)}
+                    disabled={saving}
+                  >
+                    {t.delete}
+                  </button>
+                </article>
               ))}
 
-              {admin && (
-                <button
-                  onClick={() => removeQuestion(item.id)}
-                  disabled={saving}
+              <form onSubmit={addQuestion}>
+                <h3>{t.addQuestion}</h3>
+
+                <textarea
+                  value={questionText}
+                  onChange={e => setQuestionText(e.target.value)}
+                  placeholder={t.question}
+                  rows={3}
+                  required
+                />
+
+                <input
+                  value={optionA}
+                  onChange={e => setOptionA(e.target.value)}
+                  placeholder={t.optionA}
+                  required
+                />
+
+                <input
+                  value={optionB}
+                  onChange={e => setOptionB(e.target.value)}
+                  placeholder={t.optionB}
+                  required
+                />
+
+                <input
+                  value={optionC}
+                  onChange={e => setOptionC(e.target.value)}
+                  placeholder={t.optionC}
+                  required
+                />
+
+                <input
+                  value={optionD}
+                  onChange={e => setOptionD(e.target.value)}
+                  placeholder={t.optionD}
+                  required
+                />
+
+                <label>{t.correct}</label>
+
+                <select
+                  value={correctAnswer}
+                  onChange={e => setCorrectAnswer(e.target.value)}
                 >
-                  {t.delete}
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                </select>
+
+                <button type="submit" disabled={saving}>
+                  {saving ? t.loading : t.addQuestion}
                 </button>
-              )}
-            </article>
-          ))}
-
-          {admin && (
-            <form onSubmit={addQuestion}>
-              <h3>{t.addQuestion}</h3>
-
-              <textarea
-                value={questionText}
-                onChange={e => setQuestionText(e.target.value)}
-                placeholder={t.question}
-                rows={3}
-                required
-              />
-
-              <input
-                value={optionA}
-                onChange={e => setOptionA(e.target.value)}
-                placeholder={t.optionA}
-                required
-              />
-
-              <input
-                value={optionB}
-                onChange={e => setOptionB(e.target.value)}
-                placeholder={t.optionB}
-                required
-              />
-
-              <input
-                value={optionC}
-                onChange={e => setOptionC(e.target.value)}
-                placeholder={t.optionC}
-                required
-              />
-
-              <input
-                value={optionD}
-                onChange={e => setOptionD(e.target.value)}
-                placeholder={t.optionD}
-                required
-              />
-
-              <label>{t.correct}</label>
-
-              <select
-                value={correctAnswer}
-                onChange={e => setCorrectAnswer(e.target.value)}
-              >
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-              </select>
-
-              <button type="submit" disabled={saving}>
-                {saving ? t.loading : t.addQuestion}
-              </button>
-            </form>
+              </form>
+            </>
           )}
 
-          {!admin && questions.length > 0 && (
-            <button onClick={startExam}>
-              {t.startExam}
-            </button>
-          )}
-        </>
-      )}
-
-      {view === "exam" && selected && (
-        <>
-          <button onClick={() => setView("course")}>
-            {t.back}
-          </button>
-
-          <h2>
-            {t.exam}: {getCourseTitle(selected, language)}
-          </h2>
-
-          <p>
-            {t.totalQuestions}: {questions.length}
-          </p>
-
-          <form onSubmit={submitExam}>
-            {questions.map((item, index) => (
-              <article
-                key={item.id}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "15px",
-                  marginBottom: "15px",
-                  borderRadius: "8px"
-                }}
-              >
-                <h3>
-                  {t.questionNumber} {index + 1}
-                </h3>
-
-                <p>{item.question}</p>
-
-                {Object.entries(item.options || {}).map(([key, value]) => (
-                  <label
-                    key={key}
-                    style={{
-                      display: "block",
-                      padding: "8px"
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name={item.id}
-                      value={key}
-                      checked={answers[item.id] === key}
-                      onChange={() =>
-                        setAnswers(previous => ({
-                          ...previous,
-                          [item.id]: key
-                        }))
-                      }
-                    />
-                    {" "}{key}. {value}
-                  </label>
-                ))}
-              </article>
-            ))}
-
-            <button type="submit" disabled={saving}>
-              {saving ? t.loading : t.submitExam}
-            </button>
-          </form>
-        </>
-      )}
-
-      {view === "result" && lastResult && (
-        <>
-          <h2>{t.result}</h2>
-          <h3>{lastResult.courseTitle}</h3>
-
-          <p>
-            {t.correctCount}: {lastResult.correctAnswers}
-          </p>
-
-          <p>
-            {t.totalQuestions}: {lastResult.totalQuestions}
-          </p>
-
-          <h2>{t.score}: {lastResult.score}%</h2>
-
-          <h3 style={{
-            color: lastResult.passed ? "green" : "red"
-          }}>
-            {lastResult.passed ? t.passed : t.failed}
-          </h3>
-
-          {lastResult.passed ? (
-            <p>
-              {t.certificateReady}
-              <br />
-              {t.certificate}: {lastResult.certificateId}
+          {!admin && (
+            <p style={{
+              padding: "12px",
+              background: "#fff0d9",
+              borderRadius: "8px"
+            }}>
+              {t.secureExam}
             </p>
-          ) : (
-            <p>{t.noCertificate}</p>
           )}
-
-          <button onClick={goBack}>{t.back}</button>
         </>
       )}
 
