@@ -21,6 +21,10 @@ const words = {
     addCourse: "አዲስ ትምህርት ጨምር",
     title: "የትምህርት ርዕስ",
     description: "የትምህርት መግለጫ",
+    titleEn: "የእንግሊዝኛ ርዕስ",
+    descriptionEn: "የእንግሊዝኛ መግለጫ",
+    titleOm: "የአፋን ኦሮሞ ርዕስ",
+    descriptionOm: "የአፋን ኦሮሞ መግለጫ",
     save: "አስቀምጥ",
     update: "አስተካክል",
     edit: "አርም",
@@ -44,7 +48,6 @@ const words = {
     optionC: "ምርጫ C",
     optionD: "ምርጫ D",
     correct: "ትክክለኛ መልስ",
-    choose: "ትክክለኛውን ምረጥ",
     passing: "የማለፊያ ነጥብ (%)",
     startExam: "ፈተና ጀምር",
     submitExam: "ፈተናውን አስገባ",
@@ -73,15 +76,18 @@ const words = {
     date: "ቀን",
     adminOnly: "ይህን ለማድረግ የአስተዳዳሪ ፈቃድ ያስፈልጋል።",
     noName: "ተማሪ",
-    retry: "እንደገና ሞክር",
-    yourAnswer: "የእርስዎ መልስ"
+    retry: "እንደገና ሞክር"
   },
 
   en: {
     courses: "Courses",
     addCourse: "Add New Course",
-    title: "Course Title",
-    description: "Course Description",
+    title: "Amharic Course Title",
+    description: "Amharic Course Description",
+    titleEn: "English Course Title",
+    descriptionEn: "English Course Description",
+    titleOm: "Afaan Oromo Course Title",
+    descriptionOm: "Afaan Oromo Course Description",
     save: "Save",
     update: "Update",
     edit: "Edit",
@@ -105,7 +111,6 @@ const words = {
     optionC: "Option C",
     optionD: "Option D",
     correct: "Correct Answer",
-    choose: "Choose the correct answer",
     passing: "Passing Score (%)",
     startExam: "Start Exam",
     submitExam: "Submit Exam",
@@ -134,15 +139,18 @@ const words = {
     date: "Date",
     adminOnly: "Administrator permission is required.",
     noName: "Student",
-    retry: "Try again",
-    yourAnswer: "Your answer"
+    retry: "Try again"
   },
 
   om: {
     courses: "Barnoota",
     addCourse: "Barnoota haaraa dabali",
-    title: "Mata duree barnootaa",
-    description: "Ibsa barnootaa",
+    title: "Mata duree barnootaa Afaan Amaaraa",
+    description: "Ibsa barnootaa Afaan Amaaraa",
+    titleEn: "Mata duree Afaan Ingilizii",
+    descriptionEn: "Ibsa Afaan Ingilizii",
+    titleOm: "Mata duree Afaan Oromoo",
+    descriptionOm: "Ibsa Afaan Oromoo",
     save: "Olkaa'i",
     update: "Fooyyessi",
     edit: "Fooyyessi",
@@ -166,7 +174,6 @@ const words = {
     optionC: "Filannoo C",
     optionD: "Filannoo D",
     correct: "Deebii sirrii",
-    choose: "Deebii sirrii filadhu",
     passing: "Qabxii darbuuf (%)",
     startExam: "Qormaata jalqabi",
     submitExam: "Qormaata galchi",
@@ -195,10 +202,37 @@ const words = {
     date: "Guyyaa",
     adminOnly: "Eeyyamni bulchiinsaa barbaachisa.",
     noName: "Barataa",
-    retry: "Irra deebi'i",
-    yourAnswer: "Deebii kee"
+    retry: "Irra deebi'i"
   }
 };
+
+function getCourseTitle(course, language) {
+  if (!course) return "";
+
+  if (language === "en") {
+    return course.titleEn || course.title || "";
+  }
+
+  if (language === "om") {
+    return course.titleOm || course.title || "";
+  }
+
+  return course.title || "";
+}
+
+function getCourseDescription(course, language) {
+  if (!course) return "";
+
+  if (language === "en") {
+    return course.descriptionEn || course.description || "";
+  }
+
+  if (language === "om") {
+    return course.descriptionOm || course.description || "";
+  }
+
+  return course.description || "";
+}
 
 export default function Courses({
   user,
@@ -221,6 +255,12 @@ export default function Courses({
 
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
+
+  const [courseTitleEn, setCourseTitleEn] = useState("");
+  const [courseDescriptionEn, setCourseDescriptionEn] = useState("");
+  const [courseTitleOm, setCourseTitleOm] = useState("");
+  const [courseDescriptionOm, setCourseDescriptionOm] = useState("");
+
   const [passingScore, setPassingScore] = useState("70");
   const [editingCourse, setEditingCourse] = useState(null);
 
@@ -237,18 +277,23 @@ export default function Courses({
   const [answers, setAnswers] = useState({});
   const [lastResult, setLastResult] = useState(null);
 
-  // ------------------------------
-  // LOAD COURSES
-  // ------------------------------
+  function clearCourseForm() {
+    setCourseTitle("");
+    setCourseDescription("");
+    setCourseTitleEn("");
+    setCourseDescriptionEn("");
+    setCourseTitleOm("");
+    setCourseDescriptionOm("");
+    setPassingScore("70");
+    setEditingCourse(null);
+  }
 
   async function loadCourses() {
     setLoading(true);
     setMessage("");
 
     try {
-      const snapshot = await getDocs(
-        collection(db, "courses")
-      );
+      const snapshot = await getDocs(collection(db, "courses"));
 
       setCourses(
         snapshot.docs.map(item => ({
@@ -267,10 +312,6 @@ export default function Courses({
     loadCourses();
   }, []);
 
-  // ------------------------------
-  // ADD COURSE
-  // ------------------------------
-
   async function addCourse(event) {
     event.preventDefault();
 
@@ -279,7 +320,11 @@ export default function Courses({
       return;
     }
 
-    if (!courseTitle.trim()) {
+    if (
+      !courseTitle.trim() ||
+      !courseTitleEn.trim() ||
+      !courseTitleOm.trim()
+    ) {
       setMessage(t.required);
       return;
     }
@@ -298,16 +343,20 @@ export default function Courses({
       const data = {
         title: courseTitle.trim(),
         description: courseDescription.trim(),
+
+        titleEn: courseTitleEn.trim(),
+        descriptionEn: courseDescriptionEn.trim(),
+
+        titleOm: courseTitleOm.trim(),
+        descriptionOm: courseDescriptionOm.trim(),
+
         passingScore: score,
         createdBy: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
 
-      const result = await addDoc(
-        collection(db, "courses"),
-        data
-      );
+      const result = await addDoc(collection(db, "courses"), data);
 
       setCourses(previous => [
         ...previous,
@@ -317,9 +366,7 @@ export default function Courses({
         }
       ]);
 
-      setCourseTitle("");
-      setCourseDescription("");
-      setPassingScore("70");
+      clearCourseForm();
       setMessage(t.added);
     } catch (error) {
       setMessage(error.message || t.error);
@@ -328,14 +375,18 @@ export default function Courses({
     }
   }
 
-  // ------------------------------
-  // EDIT COURSE
-  // ------------------------------
-
   function startEditCourse(course) {
     setEditingCourse(course);
+
     setCourseTitle(course.title || "");
     setCourseDescription(course.description || "");
+
+    setCourseTitleEn(course.titleEn || "");
+    setCourseDescriptionEn(course.descriptionEn || "");
+
+    setCourseTitleOm(course.titleOm || "");
+    setCourseDescriptionOm(course.descriptionOm || "");
+
     setPassingScore(String(course.passingScore ?? 70));
     setMessage("");
   }
@@ -347,7 +398,14 @@ export default function Courses({
 
     const score = Number(passingScore);
 
-    if (!courseTitle.trim() || score < 1 || score > 100) {
+    if (
+      !courseTitle.trim() ||
+      !courseTitleEn.trim() ||
+      !courseTitleOm.trim() ||
+      !Number.isFinite(score) ||
+      score < 1 ||
+      score > 100
+    ) {
       setMessage(t.required);
       return;
     }
@@ -359,14 +417,18 @@ export default function Courses({
       const data = {
         title: courseTitle.trim(),
         description: courseDescription.trim(),
+
+        titleEn: courseTitleEn.trim(),
+        descriptionEn: courseDescriptionEn.trim(),
+
+        titleOm: courseTitleOm.trim(),
+        descriptionOm: courseDescriptionOm.trim(),
+
         passingScore: score,
         updatedAt: serverTimestamp()
       };
 
-      await updateDoc(
-        doc(db, "courses", editingCourse.id),
-        data
-      );
+      await updateDoc(doc(db, "courses", editingCourse.id), data);
 
       setCourses(previous =>
         previous.map(course =>
@@ -376,10 +438,7 @@ export default function Courses({
         )
       );
 
-      setEditingCourse(null);
-      setCourseTitle("");
-      setCourseDescription("");
-      setPassingScore("70");
+      clearCourseForm();
       setMessage(t.updated);
     } catch (error) {
       setMessage(error.message || t.error);
@@ -387,10 +446,6 @@ export default function Courses({
       setSaving(false);
     }
   }
-
-  // ------------------------------
-  // OPEN COURSE
-  // ------------------------------
 
   async function openCourse(course) {
     setLoading(true);
@@ -429,10 +484,6 @@ export default function Courses({
       setLoading(false);
     }
   }
-
-  // ------------------------------
-  // ADD LESSON
-  // ------------------------------
 
   async function addLesson(event) {
     event.preventDefault();
@@ -475,13 +526,8 @@ export default function Courses({
     }
   }
 
-  // ------------------------------
-  // DELETE LESSON
-  // ------------------------------
-
   async function removeLesson(lessonId) {
     if (!admin || !selected) return;
-
     if (!window.confirm(t.confirmDelete)) return;
 
     setSaving(true);
@@ -502,10 +548,6 @@ export default function Courses({
       setSaving(false);
     }
   }
-
-  // ------------------------------
-  // ADD EXAM QUESTION
-  // ------------------------------
 
   async function addQuestion(event) {
     event.preventDefault();
@@ -564,13 +606,8 @@ export default function Courses({
     }
   }
 
-  // ------------------------------
-  // DELETE QUESTION
-  // ------------------------------
-
   async function removeQuestion(questionId) {
     if (!admin || !selected) return;
-
     if (!window.confirm(t.confirmDelete)) return;
 
     setSaving(true);
@@ -592,10 +629,6 @@ export default function Courses({
     }
   }
 
-  // ------------------------------
-  // START EXAM
-  // ------------------------------
-
   function startExam() {
     if (questions.length === 0) {
       setMessage(t.noQuestions);
@@ -607,10 +640,6 @@ export default function Courses({
     setMessage("");
     setView("exam");
   }
-
-  // ------------------------------
-  // SUBMIT AND MARK EXAM
-  // ------------------------------
 
   async function submitExam(event) {
     event.preventDefault();
@@ -649,7 +678,7 @@ export default function Courses({
           user.email ||
           t.noName,
         courseId: selected.id,
-        courseTitle: selected.title,
+        courseTitle: getCourseTitle(selected, language),
         totalQuestions: total,
         correctAnswers: correctCount,
         score,
@@ -671,7 +700,7 @@ export default function Courses({
           userId: user.uid,
           studentName: resultData.studentName,
           courseId: selected.id,
-          courseTitle: selected.title,
+          courseTitle: resultData.courseTitle,
           resultId: resultRef.id,
           score,
           certificateStatus: "issued",
@@ -699,10 +728,6 @@ export default function Courses({
       setSaving(false);
     }
   }
-
-  // ------------------------------
-  // LOAD MY RESULTS
-  // ------------------------------
 
   async function loadMyResults() {
     if (!user) return;
@@ -738,13 +763,8 @@ export default function Courses({
     }
   }
 
-  // ------------------------------
-  // DELETE COURSE
-  // ------------------------------
-
   async function removeCourse(courseId) {
     if (!admin) return;
-
     if (!window.confirm(t.confirmDelete)) return;
 
     setSaving(true);
@@ -790,25 +810,14 @@ export default function Courses({
     }
   }
 
-  // ------------------------------
-  // NAVIGATION
-  // ------------------------------
-
   function goBack() {
     setMessage("");
     setView("courses");
     setSelected(null);
     setLastResult(null);
     setAnswers({});
-    setEditingCourse(null);
-    setCourseTitle("");
-    setCourseDescription("");
-    setPassingScore("70");
+    clearCourseForm();
   }
-
-  // ------------------------------
-  // LOADING SCREEN
-  // ------------------------------
 
   if (loading) {
     return (
@@ -817,10 +826,6 @@ export default function Courses({
       </section>
     );
   }
-
-  // ------------------------------
-  // MAIN PAGE
-  // ------------------------------
 
   return (
     <section className="courses-section">
@@ -831,17 +836,9 @@ export default function Courses({
         flexWrap: "wrap",
         marginBottom: "20px"
       }}>
-        <button onClick={goBack}>
-          {t.courses}
-        </button>
-
-        <button onClick={loadMyResults}>
-          {t.myResults}
-        </button>
-
-        <button onClick={loadCourses}>
-          {t.retry}
-        </button>
+        <button onClick={goBack}>{t.courses}</button>
+        <button onClick={loadMyResults}>{t.myResults}</button>
+        <button onClick={loadCourses}>{t.retry}</button>
       </div>
 
       {message && (
@@ -856,23 +853,20 @@ export default function Courses({
         </p>
       )}
 
-      {/* COURSE LIST */}
-
       {view === "courses" && (
         <>
           <h2>{t.courses}</h2>
 
           {admin && (
             <form
-              onSubmit={
-                editingCourse ? updateCourse : addCourse
-              }
+              onSubmit={editingCourse ? updateCourse : addCourse}
               style={{ marginBottom: "25px" }}
             >
               <h3>
                 {editingCourse ? t.edit : t.addCourse}
               </h3>
 
+              <h4>{t.title}</h4>
               <input
                 value={courseTitle}
                 onChange={e => setCourseTitle(e.target.value)}
@@ -887,8 +881,37 @@ export default function Courses({
                 rows={3}
               />
 
-              <label>{t.passing}</label>
+              <h4>{t.titleEn}</h4>
+              <input
+                value={courseTitleEn}
+                onChange={e => setCourseTitleEn(e.target.value)}
+                placeholder={t.titleEn}
+                required
+              />
 
+              <textarea
+                value={courseDescriptionEn}
+                onChange={e => setCourseDescriptionEn(e.target.value)}
+                placeholder={t.descriptionEn}
+                rows={3}
+              />
+
+              <h4>{t.titleOm}</h4>
+              <input
+                value={courseTitleOm}
+                onChange={e => setCourseTitleOm(e.target.value)}
+                placeholder={t.titleOm}
+                required
+              />
+
+              <textarea
+                value={courseDescriptionOm}
+                onChange={e => setCourseDescriptionOm(e.target.value)}
+                placeholder={t.descriptionOm}
+                rows={3}
+              />
+
+              <label>{t.passing}</label>
               <input
                 type="number"
                 min="1"
@@ -905,12 +928,7 @@ export default function Courses({
               {editingCourse && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setEditingCourse(null);
-                    setCourseTitle("");
-                    setCourseDescription("");
-                    setPassingScore("70");
-                  }}
+                  onClick={clearCourseForm}
                 >
                   {t.cancel}
                 </button>
@@ -930,8 +948,8 @@ export default function Courses({
                 borderRadius: "8px"
               }}
             >
-              <h3>{course.title}</h3>
-              <p>{course.description}</p>
+              <h3>{getCourseTitle(course, language)}</h3>
+              <p>{getCourseDescription(course, language)}</p>
 
               <p>
                 {t.passing}: {course.passingScore ?? 70}%
@@ -960,14 +978,12 @@ export default function Courses({
         </>
       )}
 
-      {/* COURSE DETAILS */}
-
       {view === "course" && selected && (
         <>
           <button onClick={goBack}>{t.back}</button>
 
-          <h2>{selected.title}</h2>
-          <p>{selected.description}</p>
+          <h2>{getCourseTitle(selected, language)}</h2>
+          <p>{getCourseDescription(selected, language)}</p>
 
           <h3>{t.lessons}</h3>
 
@@ -984,7 +1000,6 @@ export default function Courses({
               }}
             >
               <h4>{lesson.title}</h4>
-
               <p style={{ whiteSpace: "pre-wrap" }}>
                 {lesson.content}
               </p>
@@ -1126,15 +1141,15 @@ export default function Courses({
         </>
       )}
 
-      {/* STUDENT EXAM */}
-
       {view === "exam" && selected && (
         <>
           <button onClick={() => setView("course")}>
             {t.back}
           </button>
 
-          <h2>{t.exam}: {selected.title}</h2>
+          <h2>
+            {t.exam}: {getCourseTitle(selected, language)}
+          </h2>
 
           <p>
             {t.totalQuestions}: {questions.length}
@@ -1177,7 +1192,6 @@ export default function Courses({
                         }))
                       }
                     />
-
                     {" "}{key}. {value}
                   </label>
                 ))}
@@ -1191,12 +1205,9 @@ export default function Courses({
         </>
       )}
 
-      {/* EXAM RESULT */}
-
       {view === "result" && lastResult && (
         <>
           <h2>{t.result}</h2>
-
           <h3>{lastResult.courseTitle}</h3>
 
           <p>
@@ -1225,13 +1236,9 @@ export default function Courses({
             <p>{t.noCertificate}</p>
           )}
 
-          <button onClick={goBack}>
-            {t.back}
-          </button>
+          <button onClick={goBack}>{t.back}</button>
         </>
       )}
-
-      {/* STUDENT RESULTS */}
 
       {view === "results" && (
         <>
