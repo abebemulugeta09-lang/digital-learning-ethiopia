@@ -19,6 +19,8 @@ import {
 
 import { auth, db } from "./firebase";
 import Courses from "./Courses";
+import Results from "./Results";
+import Certificates from "./Certificates";
 
 const languages = {
   am: {
@@ -31,7 +33,7 @@ const languages = {
     home: "መነሻ",
     courses: "ትምህርቶች",
     results: "ውጤቶች",
-    certificates: "ሰርተፍኬቶች",
+    certificates: "ሰርተፊኬቶች",
     admin: "አስተዳደር",
     logout: "ውጣ",
     loading: "በመጫን ላይ...",
@@ -48,22 +50,16 @@ const languages = {
     emailRequired: "እባክህ ኢሜይል አስገባ።",
     passwordShort: "የይለፍ ቃል ቢያንስ 6 ቁምፊዎች ይኑሩት።",
     student: "ተማሪ",
-    noAccount: "መለያ የለህም?",
-    haveAccount: "መለያ አለህ?",
     profile: "የእኔ መለያ",
-    account: "የመለያ መረጃ",
     role: "የተጠቃሚ ሚና",
     adminPanel: "የአስተዳዳሪ መቆጣጠሪያ",
     studentPanel: "የተማሪ መቆጣጠሪያ",
-    resultsInfo: "የፈተና ውጤቶችህ እዚህ ይታያሉ።",
-    certificatesInfo: "ያገኘሃቸው ሰርተፍኬቶች እዚህ ይታያሉ።",
     profileError: "የመለያ መረጃ መጫን አልተቻለም።",
     networkError: "የኢንተርኔት ችግር አለ።",
     unexpected: "ያልታወቀ ስህተት ተፈጥሯል።",
     emailExists: "ይህ ኢሜይል ቀድሞ ተመዝግቧል።",
     invalidEmail: "ትክክለኛ ኢሜይል አስገባ።",
-    accountCreated: "መለያህ ተፈጥሯል።",
-    profileNotice: "የመለያ ሚናህ በዳታቤዝ ላይ መረጋገጥ አለበት።"
+    profileUnavailable: "የመለያ መረጃ አልተገኘም። እባክህ እንደገና ግባ።"
   },
 
   en: {
@@ -93,22 +89,16 @@ const languages = {
     emailRequired: "Please enter your email.",
     passwordShort: "Password must contain at least 6 characters.",
     student: "Student",
-    noAccount: "Don't have an account?",
-    haveAccount: "Already have an account?",
     profile: "My account",
-    account: "Account information",
     role: "User role",
     adminPanel: "Administrator dashboard",
     studentPanel: "Student dashboard",
-    resultsInfo: "Your exam results will appear here.",
-    certificatesInfo: "Your earned certificates will appear here.",
     profileError: "Could not load your profile.",
     networkError: "Network error. Check your internet connection.",
     unexpected: "An unexpected error occurred.",
     emailExists: "This email is already registered.",
     invalidEmail: "Please enter a valid email address.",
-    accountCreated: "Your account has been created.",
-    profileNotice: "Your account role must be verified in the database."
+    profileUnavailable: "Account profile unavailable. Please sign in again."
   },
 
   om: {
@@ -138,22 +128,16 @@ const languages = {
     emailRequired: "Maaloo imeelii galchi.",
     passwordShort: "Jechi darbii yoo xiqqaate qubee 6 qabaachuu qaba.",
     student: "Barataa",
-    noAccount: "Herrega hin qabduu?",
-    haveAccount: "Herrega qabdaa?",
     profile: "Herrega koo",
-    account: "Odeeffannoo herregaa",
     role: "Gahee fayyadamaa",
     adminPanel: "Bulchiinsa",
     studentPanel: "Bulchiinsa barataa",
-    resultsInfo: "Bu'aan qormaata kee asitti mul'ata.",
-    certificatesInfo: "Ragaan kee asitti mul'ata.",
     profileError: "Odeeffannoon herregaa hin banamne.",
     networkError: "Rakkoon interneetii jira.",
     unexpected: "Dogoggorri hin beekamne uumameera.",
     emailExists: "Imeeliin kun duraan galmaa'eera.",
     invalidEmail: "Imeelii sirrii galchi.",
-    accountCreated: "Herregni kee uumameera.",
-    profileNotice: "Gaheen herrega kee kuusaa odeeffannoo keessatti mirkanaa'uu qaba."
+    profileUnavailable: "Odeeffannoon herregaa hin argamne. Maaloo irra deebi'ii seeni."
   }
 };
 
@@ -163,19 +147,14 @@ function getError(error, t) {
     case "auth/wrong-password":
     case "auth/user-not-found":
       return t.invalid;
-
     case "auth/email-already-in-use":
       return t.emailExists;
-
     case "auth/weak-password":
       return t.passwordShort;
-
     case "auth/invalid-email":
       return t.invalidEmail;
-
     case "auth/network-request-failed":
       return t.networkError;
-
     default:
       return error?.message || t.unexpected;
   }
@@ -187,6 +166,7 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [profileFailed, setProfileFailed] = useState(false);
 
   const [page, setPage] = useState("home");
   const [email, setEmail] = useState("");
@@ -200,7 +180,6 @@ export default function App() {
 
   const t = languages[language];
 
-  // Authentication and user profile
   useEffect(() => {
     let active = true;
 
@@ -209,10 +188,12 @@ export default function App() {
 
       setUser(currentUser);
       setProfile(null);
+      setProfileFailed(false);
       setMessage("");
 
       if (!currentUser) {
         setLoading(false);
+        setProfileLoading(false);
         return;
       }
 
@@ -224,26 +205,17 @@ export default function App() {
 
         if (!active) return;
 
-        if (userSnap.exists()) {
-          setProfile(userSnap.data());
-        } else {
-          const newProfile = {
-            name: currentUser.displayName || "",
-            email: currentUser.email || "",
-            role: "student",
-            createdAt: serverTimestamp()
-          };
-
-          await setDoc(userRef, newProfile);
-
-          if (!active) return;
-
-          setProfile(newProfile);
+        if (!userSnap.exists()) {
+          setProfileFailed(true);
+          setMessage(t.profileUnavailable);
+          return;
         }
+
+        setProfile(userSnap.data());
       } catch (error) {
         if (active) {
+          setProfileFailed(true);
           setMessage(error.message || t.profileError);
-          setProfile(null);
         }
       } finally {
         if (active) {
@@ -259,7 +231,6 @@ export default function App() {
     };
   }, []);
 
-  // Login and registration
   async function handleAuth(event) {
     event.preventDefault();
     setMessage("");
@@ -302,20 +273,17 @@ export default function App() {
           createdAt: serverTimestamp()
         };
 
-        await setDoc(
-          doc(db, "users", result.user.uid),
-          newProfile
-        );
+        await setDoc(doc(db, "users", result.user.uid), newProfile);
 
-        setProfile(newProfile);
-        setMessage(t.registered);
+        setProfile({
+          ...newProfile,
+          createdAt: null
+        });
+        setProfileFailed(false);
         setPage("home");
+        setMessage(t.registered);
       } else {
-        await signInWithEmailAndPassword(
-          auth,
-          cleanEmail,
-          password
-        );
+        await signInWithEmailAndPassword(auth, cleanEmail, password);
       }
     } catch (error) {
       setMessage(getError(error, t));
@@ -324,7 +292,6 @@ export default function App() {
     }
   }
 
-  // Password reset
   async function resetPassword() {
     setMessage("");
 
@@ -345,7 +312,6 @@ export default function App() {
     }
   }
 
-  // Sign out
   async function logout() {
     setBusy(true);
 
@@ -369,7 +335,6 @@ export default function App() {
     );
   }
 
-  // Login and registration page
   if (!user) {
     return (
       <main className="auth-page">
@@ -432,20 +397,12 @@ export default function App() {
             </div>
 
             <button type="submit" disabled={busy}>
-              {busy
-                ? t.loading
-                : isRegister
-                  ? t.register
-                  : t.login}
+              {busy ? t.loading : isRegister ? t.register : t.login}
             </button>
           </form>
 
           {!isRegister && (
-            <button
-              type="button"
-              onClick={resetPassword}
-              disabled={busy}
-            >
+            <button type="button" onClick={resetPassword} disabled={busy}>
               {t.forgot}
             </button>
           )}
@@ -468,9 +425,30 @@ export default function App() {
     );
   }
 
-  const isAdmin = profile?.role === "admin";
+  if (profileLoading) {
+    return (
+      <main className="loading">
+        <h2>{t.loading}</h2>
+      </main>
+    );
+  }
 
-  // Main application
+  if (profileFailed || !profile) {
+    return (
+      <main className="auth-page">
+        <section className="auth-card">
+          <h2>{t.profileError}</h2>
+          <p role="alert">{message || t.profileUnavailable}</p>
+          <button onClick={logout} disabled={busy}>
+            {t.logout}
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  const isAdmin = profile.role === "admin";
+
   return (
     <main className="app">
       <header className="app-header">
@@ -531,28 +509,19 @@ export default function App() {
       </nav>
 
       <section className="content">
-
-        {profileLoading && <p>{t.loading}</p>}
-
         {page === "home" && (
           <section className="dashboard">
             <h2>{t.welcome}</h2>
-
-            <h3>{profile?.name || user.displayName || user.email}</h3>
-
-            <p>
-              {t.role}: {isAdmin ? t.admin : t.student}
-            </p>
+            <h3>{profile.name || user.displayName || user.email}</h3>
+            <p>{t.role}: {isAdmin ? t.admin : t.student}</p>
 
             <div className="dashboard-links">
               <button onClick={() => setPage("courses")}>
                 {t.courses}
               </button>
-
               <button onClick={() => setPage("results")}>
                 {t.results}
               </button>
-
               <button onClick={() => setPage("certificates")}>
                 {t.certificates}
               </button>
@@ -569,33 +538,27 @@ export default function App() {
         )}
 
         {page === "results" && (
-          <section>
-            <h2>{t.results}</h2>
-            <p>{t.resultsInfo}</p>
-          </section>
+          <Results
+            user={user}
+            language={language}
+          />
         )}
 
         {page === "certificates" && (
-          <section>
-            <h2>{t.certificates}</h2>
-            <p>{t.certificatesInfo}</p>
-          </section>
+          <Certificates
+            user={user}
+            language={language}
+          />
         )}
 
         {page === "admin" && isAdmin && (
-          <section>
+          <section className="admin-panel">
             <h2>{t.adminPanel}</h2>
-
-            <p>{profile?.name || user.email}</p>
-
+            <p>{profile.name || user.email}</p>
             <button onClick={() => setPage("courses")}>
               {t.courses}
             </button>
           </section>
-        )}
-
-        {!profile && !profileLoading && message && (
-          <p role="alert">{message}</p>
         )}
       </section>
     </main>
