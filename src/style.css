@@ -303,19 +303,23 @@ select:focus {
   }
 }
 
-/* የፈተና ምርጫዎች ክብ መምረጫ (Radio button) ከጽሁፉ ጎን እንዲሰለፍ */
-.courses-section label {
+/* ለሁሉም የፈተና ምርጫዎች ክብ መምረጫ ከጽሁፉ ጎን እንዲሰለፍ */
+label:has(input[type="radio"]) {
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
+  justify-content: flex-start !important;
   gap: 10px !important;
   text-align: left !important;
   cursor: pointer;
 }
 
-.courses-section input[type="radio"] {
+input[type="radio"] {
+  display: inline-block !important;
   width: 18px !important;
   height: 18px !important;
   min-width: 18px !important;
+  max-width: 18px !important;
   margin: 0 !important;
   padding: 0 !important;
   flex-shrink: 0 !important;
