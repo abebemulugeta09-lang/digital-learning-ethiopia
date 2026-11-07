@@ -1,14 +1,4 @@
-የጠየቅካቸውን ስድስት ማሻሻያዎች ሙሉ በሙሉ ያካተተውን የተስተካከለውን Courses.jsx ኮድ ከዚህ በታች አዘጋጅቼልሃለሁ። [1]
-በኮዱ ውስጥ የተደረጉ ዋና ዋና ማሻሻያዎች፦
-• 1ኛ. የምርጫዎች ቅደም ተከተል (A, B, C, D)፦ በአስተዳዳሪ (Admin) ዝርዝር፣ በBulk Preview እና በተማሪዎች ፈተና ላይ Object.entries ሳይሆን ሁልጊዜ በትክክለኛው ["A", "B", "C", "D"] ቅደም ተከተል እንዲታዩ ተደርጓል።
-• 2ኛ. ጥያቄዎችን ከትምህርት ክፍል (Lesson) ጋር ማያያዝ፦ አዲስ ጥያቄ ሲጨመርም ሆነ በBulk Import ሲገባ ከተመረጠው ትምህርት ክፍል (lessonId) ጋር እንዲያያዝ ተደርጓል።
-• 3ኛ. የJSON Backup ማውረድ፦ አስተዳዳሪው በኮርሱ ውስጥ ያሉትን ጥያቄዎች በሙሉ በአንድ ጠቅታ (Download JSON Backup) እንዲያወርድ ተጨምሯል።
-• 4ኛ. ተመሳሳይ ጥያቄ ሲገባ ማስጠንቀቂያ፦ አንድ ጥያቄ ሲጨመር ወይም በBulk ሲገባ ከነበሩት ጥያቄዎች ጋር ተመሳሳይ ከሆነ ማስጠንቀቂያ ያሳያል።
-• 5ኛ እና 6ኛ. ደህንነት እና የነበሩ 65 ጥያቄዎች፦ የነበሩት 65 ጥያቄዎች በዳታቤዝ (Firestore) ውስጥ ስለሚቀመጡ አንድም አይሰረዙም ወይም አይቀየሩም፤ የተማሪዎች የፈተና API (getExamQuestions, submitExam) ሳይነካ ባለበት ተጠብቋል። [1]
 
-የተስተካከለው ሙሉ ኮድ (Courses.jsx)
-
-jsx
 import { useEffect, useState } from "react";
 
 import {
@@ -41,9 +31,9 @@ const words = {
     lessons: "የትምህርት ክፍሎች", lessonTitle: "የክፍሉ ርዕስ",
     content: "የትምህርት ይዘት", addLesson: "ክፍል ጨምር",
     noLessons: "ምንም የትምህርት ክፍል የለም።",
-    selectLesson: "የተያያዘ የትምህርት ክፍል (አማራጭ)",
+    selectLesson: "ከትምህርት ክፍል ጋር አያይዝ",
     allLessons: "ጠቅላላ ኮርስ (ያልተለየ)",
-    linkedLesson: "የተያያዘ ክፍል",
+    linkedLesson: "የተያያዘ የትምህርት ክፍል",
     questions: "የፈተና ጥያቄዎች", addQuestion: "ጥያቄ ጨምር",
     question: "የፈተና ጥያቄ", questionEn: "የእንግሊዝኛ ጥያቄ",
     questionOm: "የአፋን ኦሮሞ ጥያቄ",
@@ -78,7 +68,7 @@ const words = {
     loading: "Loading...", empty: "No courses found.", lessons: "Lessons",
     lessonTitle: "Lesson Title", content: "Lesson Content", addLesson: "Add Lesson",
     noLessons: "No lessons available.",
-    selectLesson: "Linked Lesson (Optional)",
+    selectLesson: "Link to Lesson",
     allLessons: "General Course (Unlinked)",
     linkedLesson: "Linked Lesson",
     questions: "Exam Questions",
@@ -116,7 +106,7 @@ const words = {
     lessons: "Kutaalee barnootaa", lessonTitle: "Mata duree kutaa",
     content: "Qabiyyee barnootaa", addLesson: "Kutaa dabali",
     noLessons: "Kutaan barnootaa hin jiru.",
-    selectLesson: "Kutaa barnootaa walqabatu (Filannoo)",
+    selectLesson: "Kutaa barnootaatiin walqabsiisi",
     allLessons: "Barnoota waliigalaa",
     linkedLesson: "Kutaa walqabate",
     questions: "Gaaffilee qormaataa",
@@ -164,7 +154,6 @@ function getQuestionText(item, language) {
   return item.question || "";
 }
 
-// 1ኛ. ሁልጊዜ A, B, C, D ቅደም ተከተል እንዲጠበቅ የሚያደርግ ረዳት ተግባር
 function normalizeOptions(optionsMap) {
   const source = optionsMap || {};
   return {
@@ -228,8 +217,8 @@ function parseBulkQuestions(text) {
       ...Object.values(optionsOm)
     ];
 
+    if (!question || !questionEn || !questionOm ||
 Use code with caution.
-if (!question || !questionEn || !questionOm ||
 allOptions.some(value => !value) ||
 !OPTION_KEYS.includes(correctAnswer)) {
 throw new Error(
@@ -262,7 +251,6 @@ const [passingScore, setPassingScore] = useState("70");
 const [editingCourse, setEditingCourse] = useState(null);
 const [lessonTitle, setLessonTitle] = useState("");
 const [lessonContent, setLessonContent] = useState("");
-// 2ኛ. ጥያቄዎችን ከትምህርት ክፍል ጋር ማያያዣ State
 const [selectedLessonId, setSelectedLessonId] = useState("");
 const [bulkLessonId, setBulkLessonId] = useState("");
 const [questionText, setQuestionText] = useState("");
@@ -303,7 +291,6 @@ setOptionAOm(""); setOptionBOm(""); setOptionCOm(""); setOptionDOm("");
 setCorrectAnswer("A");
 setSelectedLessonId("");
 }
-// 4ኛ. ተመሳሳይ ጥያቄ መኖሩን የሚፈትሽ ተግባር
 function isDuplicateQuestion(qAm, qEn, qOm) {
 const nAm = normalizeTextForCheck(qAm);
 const nEn = normalizeTextForCheck(qEn);
@@ -315,7 +302,6 @@ const eOm = normalizeTextForCheck(existing.questionOm);
 return (nAm && eAm === nAm) || (nEn && eEn === nEn) || (nOm && eOm === nOm);
 });
 }
-// 3ኛ. ያሉትን ጥያቄዎች በJSON Backup ማውረጃ ተግባር
 function downloadQuestionsBackup() {
 if (!selected || !questions.length) return;
 const backupPayload = {
@@ -346,6 +332,29 @@ document.body.appendChild(link);
 link.click();
 document.body.removeChild(link);
 URL.revokeObjectURL(url);
+}
+async function linkExistingQuestionToLesson(questionId, newLessonId) {
+if (!admin || !selected) return;
+const lessonObj = lessons.find(l => l.id === newLessonId);
+const updateData = {
+lessonId: lessonObj ? lessonObj.id : null,
+lessonTitle: lessonObj ? lessonObj.title : null,
+updatedAt: serverTimestamp()
+};
+setSaving(true);
+try {
+await updateDoc(doc(db, "courses", selected.id, "questions", questionId), updateData);
+setQuestions(previous => previous.map(q =>
+q.id === questionId
+? { ...q, lessonId: updateData.lessonId, lessonTitle: updateData.lessonTitle }
+: q
+));
+setMessage(t.updated);
+} catch (error) {
+setMessage(error.message || t.error);
+} finally {
+setSaving(false);
+}
 }
 async function loadCourses() {
 setLoading(true); setMessage("");
@@ -409,7 +418,6 @@ setLoading(true); setMessage("");
 try {
 const lessonSnapshot = await getDocs(collection(db, "courses", course.id, "lessons"));
 setLessons(lessonSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
-// 5ኛ. የተማሪ ደህንነት የፈተና ስርዓት እንዳለ ተጠብቋል
 setExamQuestions([]); setExamAnswers({}); setExamResult(null); setExamError("");
 if (admin) {
 const questionSnapshot = await getDocs(collection(db, "courses", course.id, "questions"));
@@ -490,7 +498,6 @@ if (!questionText.trim() || !questionTextEn.trim() || !questionTextOm.trim() ||
 [...Object.values(options), ...Object.values(optionsEn), ...Object.values(optionsOm)].some(v => !v)) {
 setMessage(t.required); return;
 }
-// 4ኛ. ተመሳሳይ ጥያቄ ሲገባ ማስጠንቀቂያ ማሳየት
 if (isDuplicateQuestion(questionText, questionTextEn, questionTextOm)) {
 if (!window.confirm(t.duplicateWarn)) return;
 }
@@ -727,7 +734,6 @@ borderRadius: "6px", overflowWrap: "anywhere"
 
 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
 {t.adminQuestions} ({questions.length})
-{/* 3ኛ. የJSON Backup ማውረጃ ቁልፍ */}
 {questions.length > 0 && (
 <button
 type="button"
@@ -742,16 +748,23 @@ style={{ background: "#0f766e", color: "#fff", padding: "10px 15px", border: "no
 const optsAm = normalizeOptions(item.options);
 const optsEn = normalizeOptions(item.optionsEn);
 const optsOm = normalizeOptions(item.optionsOm);
-const linkedLessonObj = lessons.find(l => l.id === item.lessonId);
-const lessonDisplay = linkedLessonObj?.title || item.lessonTitle;
 return (
 
 {index + 1}. {item.question}
-{lessonDisplay && (
-<p style={{ color: "#1d4ed8", fontSize: "14px", margin: "4px 0" }}>
-📚 {t.linkedLesson}: {lessonDisplay}
+<div style={{ margin: "8px 0" }}>
+📚 {t.linkedLesson}:{" "}
+<select
+value={item.lessonId || ""}
+disabled={saving}
+onChange={e => linkExistingQuestionToLesson(item.id, e.target.value)}
+style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+>
+-- {t.allLessons} --
+{lessons.map(lesson => (
+{lesson.title}
+))}
 
-)}
+
 English: {item.questionEn || "(not translated)"}
 Afaan Oromo: {item.questionOm || "(not translated)"}
 Amharic options
@@ -771,7 +784,6 @@ padding: "18px", margin: "25px 0", borderRadius: "12px"
 }}>
 📥 Bulk Import Questions – 3 Languages
 እያንዳንዱ ጥያቄ በሶስቱም ቋንቋዎች መሞላት አለበት። ጥያቄዎቹን ከታች ባለው ቅርጸት አስገባ፣ Preview አድርግ፣ ከመረመርክ በኋላ Import All ተጫን።
-{/* 2ኛ. ለBulk Import የትምህርት ክፍል መምረጫ */}
 {t.selectLesson}
 <select style={{ ...fieldStyle, background: "#fff" }} value={bulkLessonId} onChange={e => setBulkLessonId(e.target.value)}>
 -- {t.allLessons} --
@@ -826,7 +838,6 @@ Correct Answer: {item.correctAnswer}
 
 )}
 {t.addQuestion} – 3 Languages
-{/* 2ኛ. ለነጠላ ጥያቄ የትምህርት ክፍል መምረጫ */}
 {t.selectLesson}
 <select style={fieldStyle} value={selectedLessonId} onChange={e => setSelectedLessonId(e.target.value)}>
 -- {t.allLessons} --
@@ -863,7 +874,6 @@ CD
 
 </>
 )}
-{/* 5ኛ. የተማሪ ደህንነት የፈተና ስርዓት */}
 {!admin && (
 {language === "en" ? "Secure Exam" : language === "om" ? "Qormaata nageenya qabu" : "ደህንነቱ የተጠበቀ ፈተና"}
 {examError && (
@@ -900,4 +910,3 @@ return (
 <article key={item.id} style={{ ...sectionStyle, margin: "12px 0" }}>
 {index + 1}. {getQuestionText(item, language)}
 {OPTION_KEYS.map(key => (
-Copying...
