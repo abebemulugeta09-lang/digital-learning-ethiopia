@@ -1,4 +1,3 @@
-
 * {
   box-sizing: border-box;
 }
@@ -302,4 +301,22 @@ select:focus {
     border: 3px solid #c6a34a;
     margin: 20px;
   }
+}
+
+/* የፈተና ምርጫዎች ክብ መምረጫ (Radio button) ከጽሁፉ ጎን እንዲሰለፍ */
+.courses-section label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  text-align: left !important;
+  cursor: pointer;
+}
+
+.courses-section input[type="radio"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
 }
