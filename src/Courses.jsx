@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "./firebase";
+import { getExamQuestions, submitExam } from "./examApi";
 
 const words = {
   am: {
@@ -229,6 +230,11 @@ export default function Courses({ user, profile, language = "am" }) {
   const [bulkText, setBulkText] = useState("");
   const [bulkQuestions, setBulkQuestions] = useState([]);
   const [bulkError, setBulkError] = useState("");
+  const [examQuestions, setExamQuestions] = useState([]);
+  const [examAnswers, setExamAnswers] = useState({});
+  const [examResult, setExamResult] = useState(null);
+  const [examError, setExamError] = useState("");
+  const [examSaving, setExamSaving] = useState(false);
 
   function clearCourseForm() {
     setCourseTitle(""); setCourseDescription("");
@@ -314,12 +320,19 @@ export default function Courses({ user, profile, language = "am" }) {
       const lessonSnapshot = await getDocs(collection(db, "courses", course.id, "lessons"));
       setLessons(lessonSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
 
-      // Important: correct answers are never downloaded to student devices.
+      // Admins manage questions directly. Students receive sanitized questions from the secure API.
+      setExamQuestions([]); setExamAnswers({}); setExamResult(null); setExamError("");
       if (admin) {
         const questionSnapshot = await getDocs(collection(db, "courses", course.id, "questions"));
         setQuestions(questionSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
       } else {
         setQuestions([]);
+        try {
+          const examData = await getExamQuestions(course.id);
+          setExamQuestions(Array.isArray(examData.questions) ? examData.questions : []);
+        } catch (examError) {
+          setExamError(examError.message || t.secureExam);
+        }
       }
       setSelected(course); setView("course");
     } catch (error) {
@@ -329,6 +342,24 @@ export default function Courses({ user, profile, language = "am" }) {
     }
   }
 
+  async function handleExamSubmit(event) {
+    event.preventDefault();
+    if (!selected || admin || examSaving) return;
+    if (examQuestions.some(question => !examAnswers[question.id])) {
+      setExamError(language === "en" ? "Please answer every question." : language === "om" ? "Maaloo gaaffii hunda deebisi." : "እባክህ ሁሉንም ጥያቄዎች መልስ።");
+      return;
+    }
+    setExamSaving(true); setExamError("");
+    try {
+      const result = await submitExam(selected.id, examAnswers, language);
+      setExamResult(result);
+      setMessage("");
+    } catch (error) {
+      setExamError(error.message || t.error);
+    } finally {
+      setExamSaving(false);
+    }
+  }
   async function addLesson(event) {
     event.preventDefault();
     if (!admin || !user || !selected) { setMessage(t.adminOnly); return; }
@@ -501,6 +532,7 @@ export default function Courses({ user, profile, language = "am" }) {
   function goBack() {
     setMessage(""); setView("courses"); setSelected(null);
     setBulkText(""); setBulkQuestions([]); setBulkError("");
+    setExamQuestions([]); setExamAnswers({}); setExamResult(null); setExamError("");
     clearCourseForm(); clearQuestionForm();
   }
 
@@ -713,7 +745,34 @@ export default function Courses({ user, profile, language = "am" }) {
           )}
 
           {!admin && (
-            <p style={{ padding: "12px", background: "#fff0d9", borderRadius: "8px" }}>{t.secureExam}</p>
+            <section style={sectionStyle}>
+              <h3>{language === "en" ? "Secure Exam" : language === "om" ? "Qormaata nageenya qabu" : "ደህንነቱ የተጠበቀ ፈተና"}</h3>
+              {examError && <p role="alert" style={{ color: "#b91c1c", background: "#fee2e2", padding: "10px", borderRadius: "6px", overflowWrap: "anywhere" }}>{examError}</p>}
+              {examQuestions.length === 0 && !examError && <p>{t.loading}</p>}
+              {examResult ? (
+                <div>
+                  <h4>{language === "en" ? "Exam result" : language === "om" ? "Bu'aa qormaataa" : "የፈተና ውጤት"}</h4>
+                  <p>{t.score}: <strong>{examResult.score}%</strong></p>
+                  <p>{t.correctCount}: {examResult.correctAnswers}/{examResult.totalQuestions}</p>
+                  <strong style={{ color: examResult.passed ? "green" : "red" }}>{examResult.passed ? t.passed : t.failed}</strong>
+                </div>
+              ) : examQuestions.length > 0 ? (
+                <form onSubmit={handleExamSubmit}>
+                  <p>{language === "en" ? "Answer all questions, then submit once." : language === "om" ? "Gaaffii hunda deebisi, achiis yeroo tokko ergi." : "ሁሉንም ጥያቄዎች መልሰህ አንድ ጊዜ አስገባ።"}</p>
+                  {examQuestions.map((item, index) => (
+                    <article key={item.id} style={{ ...sectionStyle, margin: "12px 0" }}>
+                      <h4>{index + 1}. {getQuestionText(item, language)}</h4>
+                      {Object.entries(getQuestionOptions(item, language)).map(([key, value]) => (
+                        <label key={key} style={{ display: "block", padding: "8px 4px" }}>
+                          <input type="radio" name={`exam-${item.id}`} value={key} checked={examAnswers[item.id] === key} onChange={() => setExamAnswers(previous => ({ ...previous, [item.id]: key }))} /> {key}. {value}
+                        </label>
+                      ))}
+                    </article>
+                  ))}
+                  <button type="submit" disabled={examSaving}>{examSaving ? t.loading : language === "en" ? "Submit Exam" : language === "om" ? "Qormaata ergi" : "ፈተናውን አስገባ"}</button>
+                </form>
+              ) : null}
+            </section>
           )}
         </>
       )}
