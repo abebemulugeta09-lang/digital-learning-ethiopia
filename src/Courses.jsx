@@ -910,3 +910,29 @@ return (
 <article key={item.id} style={{ ...sectionStyle, margin: "12px 0" }}>
 {index + 1}. {getQuestionText(item, language)}
 {OPTION_KEYS.map(key => (
+  <label
+    key={key}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      padding: "10px 8px",
+      cursor: "pointer"
+    }}
+  >
+    <input
+      type="radio"
+      name={`exam-${item.id}`}
+      value={key}
+      checked={examAnswers[item.id] === key}
+      onChange={() => setExamAnswers(previous => ({ ...previous, [item.id]: key }))}
+      style={{ width: "auto", margin: 0, flexShrink: 0 }}
+    />
+    <span>
+      <strong>{key}.</strong> {studentOpts[key]}
+    </span>
+  </label>
+))}
+
+
+  
