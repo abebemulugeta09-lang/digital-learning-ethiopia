@@ -910,14 +910,18 @@ return (
 <article key={item.id} style={{ ...sectionStyle, margin: "12px 0" }}>
 {index + 1}. {getQuestionText(item, language)}
 {OPTION_KEYS.map(key => (
-  <label
+  <div
     key={key}
+    onClick={() => setExamAnswers(previous => ({ ...previous, [item.id]: key }))}
     style={{
       display: "flex",
+      flexDirection: "row",
       alignItems: "center",
+      justifyContent: "flex-start",
       gap: "10px",
-      padding: "10px 8px",
-      cursor: "pointer"
+      padding: "10px 6px",
+      cursor: "pointer",
+      textAlign: "left"
     }}
   >
     <input
@@ -926,13 +930,18 @@ return (
       value={key}
       checked={examAnswers[item.id] === key}
       onChange={() => setExamAnswers(previous => ({ ...previous, [item.id]: key }))}
-      style={{ width: "auto", margin: 0, flexShrink: 0 }}
+      style={{
+        width: "18px",
+        height: "18px",
+        minWidth: "18px",
+        margin: 0,
+        display: "inline-block"
+      }}
     />
-    <span>
+    <span style={{ display: "inline", lineHeight: "1.4" }}>
       <strong>{key}.</strong> {studentOpts[key]}
     </span>
-  </label>
+  </div>
 ))}
-
 
   
