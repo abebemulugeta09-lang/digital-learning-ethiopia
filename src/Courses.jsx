@@ -217,7 +217,6 @@ function parseBulkQuestions(text) {
     ];
 
     if (!question || !questionEn || !questionOm ||
-Use code with caution.
 allOptions.some(value => !value) ||
 !OPTION_KEYS.includes(correctAnswer)) {
 throw new Error(
