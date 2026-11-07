@@ -135,9 +135,24 @@ function getQuestionText(item, language) {
 }
 
 function getQuestionOptions(item, language) {
-  if (language === "en") return item.optionsEn || item.options || {};
-  if (language === "om") return item.optionsOm || item.options || {};
-  return item.options || {};
+  const source = language === "en"
+    ? (item.optionsEn || item.options || {})
+    : language === "om"
+      ? (item.optionsOm || item.options || {})
+      : (item.options || {});
+  // Firestore map iteration order is not guaranteed; always show A, B, C, D.
+  return { A: source.A || "", B: source.B || "", C: source.C || "", D: source.D || "" };
+}
+
+function getResultTime(value) {
+  if (!value) return 0;
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (typeof value.seconds === "number") return value.seconds * 1000;
+  return 0;
 }
 
 // Each question block is separated by one blank line.
@@ -520,7 +535,8 @@ export default function Courses({ user, profile, language = "am" }) {
       const resultQuery = query(collection(db, "results"), where("userId", "==", user.uid));
       const snapshot = await getDocs(resultQuery);
       const list = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
-      list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      // Supports both Firestore Timestamp values and ISO timestamps from older API versions.
+      list.sort((a, b) => getResultTime(b.createdAt) - getResultTime(a.createdAt));
       setResults(list); setView("results");
     } catch (error) {
       setMessage(error.message || t.error);
@@ -747,7 +763,23 @@ export default function Courses({ user, profile, language = "am" }) {
           {!admin && (
             <section style={sectionStyle}>
               <h3>{language === "en" ? "Secure Exam" : language === "om" ? "Qormaata nageenya qabu" : "ደህንነቱ የተጠበቀ ፈተና"}</h3>
-              {examError && <p role="alert" style={{ color: "#b91c1c", background: "#fee2e2", padding: "10px", borderRadius: "6px", overflowWrap: "anywhere" }}>{examError}</p>}
+              {examError && (
+                <div role="alert" style={{ color: "#b91c1c", background: "#fee2e2", padding: "10px", borderRadius: "6px", overflowWrap: "anywhere" }}>
+                  <p>{examError}</p>
+                  <button type="button" onClick={async () => {
+                    setExamError(""); setExamQuestions([]); setExamAnswers({}); setExamResult(null);
+                    try {
+                      const examData = await getExamQuestions(selected.id);
+                      setExamQuestions(Array.isArray(examData.questions) ? examData.questions : []);
+                      if (!Array.isArray(examData.questions) || examData.questions.length === 0) {
+                        setExamError(t.noQuestions);
+                      }
+                    } catch (error) {
+                      setExamError(error.message || t.secureExam);
+                    }
+                  }}>{t.retry}</button>
+                </div>
+              )}
               {examQuestions.length === 0 && !examError && <p>{t.loading}</p>}
               {examResult ? (
                 <div>
