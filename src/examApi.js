@@ -26,16 +26,18 @@ export async function getExamQuestions(courseId) {
     { headers }
   );
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || "Could not load exam questions.");
+    throw new Error(
+      data.error || `Could not load exam (${response.status}).`
+    );
   }
 
   return data;
 }
 
-export async function submitExam(courseId, answers) {
+export async function submitExam(courseId, answers, language = "am") {
   const headers = await getAuthHeaders();
 
   const response = await fetch(
@@ -43,14 +45,16 @@ export async function submitExam(courseId, answers) {
     {
       method: "POST",
       headers,
-      body: JSON.stringify({ answers }),
+      body: JSON.stringify({ answers, language }),
     }
   );
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || "Could not submit exam.");
+    throw new Error(
+      data.error || `Could not submit exam (${response.status}).`
+    );
   }
 
   return data;
