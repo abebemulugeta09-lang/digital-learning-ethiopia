@@ -458,15 +458,7 @@ export default function Courses({ user, profile, language = "am" }) {
     }
     setExamSaving(true); setExamError("");
     try {
-አሁን የተፈጠረው ስህተት የእኔ የአማርኛ ማብራሪያ ጽሑፍ ("በስልክዎ ላይ በእጅዎ ኮፒ ሲያደርጉ...") በስህተት ኮድዎ ውስጥ መስመር 221 ላይ ስለተለጠፈ ነው!
-የመጀመሪያውን የላኩልዎትን ፋይል መሰረት በማድረግ፣ አሁን ከመስመር 219 ጀምሮ ያለውን የቀረውን ክፍል ብቻ በአጭሩ እልክልዎታለሁ።
 
-እባክዎ ይህን በጥንቃቄ ያድርጉ (መስመር 219-222ን ለማስተካከል)፦
-
-1. በ src/Courses.jsx ፋይል ውስጥ ወደ መስመር 219 ይሂዱ።
-2. ከመስመር 219 ጀምሮ እስከ ፋይሉ መጨረሻ ድረስ ያለውን ሁሉንም ጽሑፍ ያጥፉት (ከመስመር 1 እስከ 218 ያለውን አይንኩት)።
-3. ከዚህ በታች ያለውን ንጹህ ኮድ ብቻ (ከሳጥኑ ውስጥ ያለውን ብቻ፣ ከሳጥኑ ውጭ ያለውን የአማርኛ ጽሑፍ ሳይጨምሩ) ኮፒ አድርገው እዚያው መስመር 219 ላይ Paste ያድርጉ፦
-jsx
     if (!question || !questionEn || !questionOm ||
       allOptions.some(value => !value) ||
       !OPTION_KEYS.includes(correctAnswer)) {
