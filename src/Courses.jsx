@@ -216,465 +216,500 @@ function parseBulkQuestions(text) {
       ...Object.values(optionsOm)
     ];
 
-    if (!question || !questionEn || !questionOm ||
+     if (!question || !questionEn || !questionOm ||
       allOptions.some(value => !value) ||
-በስልክዎ ላይ በእጅዎ ኮፒ ሲያደርጉ ከመስመር 220 እስከ 600 ያለው መሃል ኮድ ተዘልሎ የመጨረሻው ክፍል ({view === "results" && () ከመስመር 220 ጋር ስለተጣበቀ ነው ይህ ስህተት የተፈጠረው።
-ስልክ ላይ ረጅም ኮድ በእጅ ሲመረጥ (Highlight ሲደረግ) መሃሉን ስለሚዘለው፣ ከላይ ያለውን Copy ቁልፍ (የሁለት ወረቀት ምልክት) መጫን አለብዎት።
-
-እባክዎ ይህን ቀላል ዘዴ ይጠቀሙ፦
-
-1. በ src/Courses.jsx ፋይልዎ ውስጥ ያለውን ሁሉንም ኮድ አሁኑኑ ያጥፉ (Select All -> Delete)።
-2. ከታች ባለው የኮድ ሳጥን ቀኝ-ላይ ጥግ ላይ የሚታየውን የ Copy ቁልፍ (📋) አንድ ጊዜ ብቻ ይንኩት (በጣትዎ ጽሑፉን አይምረጡት)።
-3. ወደ src/Courses.jsx ሄደው Paste ያድርጉና Save ይበሉ።
-jsx
-import { useEffect, useState } from "react";
-
-import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  updateDoc,
-  doc,
-  serverTimestamp,
-  query,
-  where,
-  writeBatch
-} from "firebase/firestore";
-
-import { db } from "./firebase";
-import { getExamQuestions, submitExam } from "./examApi";
-
-const OPTION_KEYS = ["A", "B", "C", "D"];
-
-const words = {
-  am: {
-    courses: "ትምህርቶች", addCourse: "አዲስ ትምህርት ጨምር",
-    title: "የአማርኛ ትምህርት ርዕስ", description: "የአማርኛ ትምህርት መግለጫ",
-    titleEn: "የእንግሊዝኛ ርዕስ", descriptionEn: "የእንግሊዝኛ መግለጫ",
-    titleOm: "የአፋን ኦሮሞ ርዕስ", descriptionOm: "የአፋን ኦሮሞ መግለጫ",
-    save: "አስቀምጥ", update: "አስተካክል", edit: "አርም", delete: "አስወግድ",
-    archive: "ወደ ማህደር አስገባ", cancel: "ተወው", open: "ክፈት", back: "ተመለስ",
-    loading: "በመጫን ላይ...", empty: "ምንም ትምህርት አልተገኘም።",
-    lessons: "የትምህርት ክፍሎች", lessonTitle: "የክፍሉ ርዕስ",
-    content: "የትምህርት ይዘት", addLesson: "ክፍል ጨምር",
-    noLessons: "ምንም የትምህርት ክፍል የለም።",
-    selectLesson: "ከትምህርት ክፍል ጋር አያይዝ",
-    allLessons: "ጠቅላላ ኮርስ (ያልተለየ)",
-    linkedLesson: "የተያያዘ የትምህርት ክፍል",
-    questions: "የፈተና ጥያቄዎች", addQuestion: "ጥያቄ ጨምር",
-    question: "የፈተና ጥያቄ", questionEn: "የእንግሊዝኛ ጥያቄ",
-    questionOm: "የአፋን ኦሮሞ ጥያቄ",
-    optionA: "ምርጫ A", optionB: "ምርጫ B", optionC: "ምርጫ C", optionD: "ምርጫ D",
-    optionsEn: "የእንግሊዝኛ ምርጫዎች", optionsOm: "የአፋን ኦሮሞ ምርጫዎች",
-    correct: "ትክክለኛ መልስ", passing: "የማለፊያ ነጥብ (%)",
-    myResults: "የእኔ ውጤቶች", noResults: "የፈተና ውጤት አልተገኘም።",
-    result: "የፈተና ውጤት", score: "ያገኘኸው ነጥብ",
-    passed: "አልፈሃል", failed: "አላለፍክም", certificate: "ሰርተፊኬት",
-    student: "ተማሪ", date: "ቀን", correctCount: "ትክክለኛ መልሶች",
-    totalQuestions: "ጠቅላላ ጥያቄዎች",
-    confirmDelete: "ይህን ነገር ማስወገድ ትፈልጋለህ?",
-    confirmArchive: "ይህን ኮርስ ወደ ማህደር ማስገባት ትፈልጋለህ?",
-    added: "ተጨምሯል።", updated: "ተስተካክሏል።",
-    deleted: "ተወግዷል።", archived: "ወደ ማህደር ገብቷል።",
-    error: "ስህተት ተፈጥሯል።", required: "እባክህ አስፈላጊውን መረጃ ሙላ።",
-    adminOnly: "የአስተዳዳሪ ፈቃድ ያስፈልጋል።", noName: "ተማሪ",
-    retry: "እንደገና ሞክር",
-    secureExam: "ፈተናው በደህንነት ምክንያት ለጊዜው ተዘግቷል።",
-    adminQuestions: "የአስተዳዳሪ የጥያቄ አስተዳደር",
-    noQuestions: "ጥያቄዎች አልተጨመሩም።", archivedList: "የተመዘገቡ ኮርሶች",
-    downloadBackup: "📥 የጥያቄዎች JSON Backup አውርድ",
-    duplicateWarn: "⚠️ ማስጠንቀቂያ፡ ተመሳሳይ ጥያቄ ቀድሞ ተመዝግቧል። አሁንም መጨመር ትፈልጋለህ?"
-  },
-  en: {
-    courses: "Courses", addCourse: "Add New Course",
-    title: "Amharic Course Title", description: "Amharic Course Description",
-    titleEn: "English Course Title", descriptionEn: "English Course Description",
-    titleOm: "Afaan Oromo Course Title", descriptionOm: "Afaan Oromo Course Description",
-    save: "Save", update: "Update", edit: "Edit", delete: "Remove",
-    archive: "Archive Course", cancel: "Cancel", open: "Open", back: "Back",
-    loading: "Loading...", empty: "No courses found.", lessons: "Lessons",
-    lessonTitle: "Lesson Title", content: "Lesson Content", addLesson: "Add Lesson",
-    noLessons: "No lessons available.",
-    selectLesson: "Link to Lesson",
-    allLessons: "General Course (Unlinked)",
-    linkedLesson: "Linked Lesson",
-    questions: "Exam Questions",
-    addQuestion: "Add Question", question: "Amharic Question",
-    questionEn: "English Question", questionOm: "Afaan Oromo Question",
-    optionA: "Option A (Amharic)", optionB: "Option B (Amharic)",
-    optionC: "Option C (Amharic)", optionD: "Option D (Amharic)",
-    optionsEn: "English Options", optionsOm: "Afaan Oromo Options",
-    correct: "Correct Answer", passing: "Passing Score (%)",
-    myResults: "My Results", noResults: "No exam results found.",
-    result: "Exam Result", score: "Your Score", passed: "Passed",
-    failed: "Failed", certificate: "Certificate", student: "Student",
-    date: "Date", correctCount: "Correct Answers", totalQuestions: "Total Questions",
-    confirmDelete: "Are you sure you want to remove this item?",
-    confirmArchive: "Are you sure you want to archive this course?",
-    added: "Added successfully.", updated: "Updated successfully.",
-    deleted: "Removed successfully.", archived: "Course archived successfully.",
-    error: "An error occurred.", required: "Please complete all required fields.",
-    adminOnly: "Administrator permission is required.", noName: "Student",
-    retry: "Retry",
-    secureExam: "Exams are temporarily unavailable while secure exam services are being configured.",
-    adminQuestions: "Administrator Question Management",
-    noQuestions: "No questions have been added.", archivedList: "Archived courses",
-    downloadBackup: "📥 Download JSON Backup",
-    duplicateWarn: "⚠️ Warning: A similar question already exists. Do you still want to add it?"
-  },
-  om: {
-    courses: "Barnoota", addCourse: "Barnoota haaraa dabali",
-    title: "Mata duree barnootaa Afaan Amaaraa", description: "Ibsa barnootaa Afaan Amaaraa",
-    titleEn: "Mata duree Afaan Ingilizii", descriptionEn: "Ibsa Afaan Ingilizii",
-    titleOm: "Mata duree Afaan Oromoo", descriptionOm: "Ibsa Afaan Oromoo",
-    save: "Olkaa'i", update: "Fooyyessi", edit: "Fooyyessi", delete: "Haqi",
-    archive: "Kuusaa keessa kaa'i", cancel: "Dhiisi", open: "Bani", back: "Deebi'i",
-    loading: "Fe'amaa jira...", empty: "Barnoonni hin argamne.",
-    lessons: "Kutaalee barnootaa", lessonTitle: "Mata duree kutaa",
-    content: "Qabiyyee barnootaa", addLesson: "Kutaa dabali",
-    noLessons: "Kutaan barnootaa hin jiru.",
-    selectLesson: "Kutaa barnootaatiin walqabsiisi",
-    allLessons: "Barnoota waliigalaa",
-    linkedLesson: "Kutaa walqabate",
-    questions: "Gaaffilee qormaataa",
-    addQuestion: "Gaaffii dabali", question: "Gaaffii Afaan Amaaraa",
-    questionEn: "Gaaffii Afaan Ingilizii", questionOm: "Gaaffii Afaan Oromoo",
-    optionA: "Filannoo A (Amaaraa)", optionB: "Filannoo B (Amaaraa)",
-    optionC: "Filannoo C (Amaaraa)", optionD: "Filannoo D (Amaaraa)",
-    optionsEn: "Filannoowwan Afaan Ingilizii", optionsOm: "Filannoowwan Afaan Oromoo",
-    correct: "Deebii sirrii", passing: "Qabxii darbuuf (%)",
-    myResults: "Bu'aawwan koo", noResults: "Bu'aan qormaataa hin argamne.",
-    result: "Bu'aa qormaataa", score: "Qabxii kee", passed: "Darbiteetta",
-    failed: "Hin darbine", certificate: "Ragaa", student: "Barataa",
-    date: "Guyyaa", correctCount: "Deebii sirrii", totalQuestions: "Gaaffilee waliigalaa",
-    confirmDelete: "Wanta kana haquu barbaaddaa?",
-    confirmArchive: "Barnoota kana kuusaa keessa kaa'uu barbaaddaa?",
-    added: "Milkaa'inaan dabalameera.", updated: "Milkaa'inaan fooyya'eera.",
-    deleted: "Milkaa'inaan haqameera.", archived: "Kuusaa keessa galfameera.",
-    error: "Dogoggorri uumameera.", required: "Maaloo odeeffannoo barbaachisaa guuti.",
-    adminOnly: "Eeyyamni bulchiinsaa barbaachisa.", noName: "Barataa",
-    retry: "Irra deebi'i", secureExam: "Qormaanni yeroo ammaa nageenyaaf cufameera.",
-    adminQuestions: "Bulchiinsa gaaffilee", noQuestions: "Gaaffileen hin dabalamin.",
-    archivedList: "Barnoota kuusaa keessa jiru",
-    downloadBackup: "📥 JSON Backup Buufadhu",
-    duplicateWarn: "⚠️ Akeekkachiisa: Gaaffiin walfakkaatu duraan galmaa'eera. Ammas dabaluu barbaaddaa?"
-  }
-};
-
-function getCourseTitle(course, language) {
-  if (!course) return "";
-  if (language === "en") return course.titleEn || course.title || "";
-  if (language === "om") return course.titleOm || course.title || "";
-  return course.title || "";
-}
-
-function getCourseDescription(course, language) {
-  if (!course) return "";
-  if (language === "en") return course.descriptionEn || course.description || "";
-  if (language === "om") return course.descriptionOm || course.description || "";
-  return course.description || "";
-}
-
-function getQuestionText(item, language) {
-  if (language === "en") return item.questionEn || item.question || "";
-  if (language === "om") return item.questionOm || item.question || "";
-  return item.question || "";
-}
-
-function normalizeOptions(optionsMap) {
-  const source = optionsMap || {};
-  return {
-    A: source.A || "",
-    B: source.B || "",
-    C: source.C || "",
-    D: source.D || ""
-  };
-}
-
-function getQuestionOptions(item, language) {
-  const source = language === "en"
-    ? (item.optionsEn || item.options || {})
-    : language === "om"
-      ? (item.optionsOm || item.options || {})
-      : (item.options || {});
-  return normalizeOptions(source);
-}
-
-function normalizeTextForCheck(str) {
-  return (str || "").trim().toLowerCase().replace(/\s+/g, " ");
-}
-
-function getResultTime(value) {
-  if (!value) return 0;
-  if (typeof value === "string") {
-    const parsed = Date.parse(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  if (typeof value.toMillis === "function") return value.toMillis();
-  if (typeof value.seconds === "number") return value.seconds * 1000;
-  return 0;
-}
-
-function parseBulkQuestions(text) {
-  const blocks = text.trim().split(/\r?\n\s*\r?\n/).filter(Boolean);
-  if (!blocks.length) throw new Error("ምንም ጥያቄ አልተገኘም።");
-
-  return blocks.map((block, index) => {
-    const lines = block.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-
-    function getValue(label) {
-      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const line = lines.find(item =>
-        new RegExp("^" + escaped + "\\s*:", "i").test(item)
+      !OPTION_KEYS.includes(correctAnswer)) {
+      throw new Error(
+        `ጥያቄ ${index + 1}: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።`
       );
-      return line ? line.replace(/^[^:]+:/, "").trim() : "";
     }
 
-    const question = getValue("Question");
-    const questionEn = getValue("QuestionEn");
-    const questionOm = getValue("QuestionOm");
-    const options = { A: getValue("A"), B: getValue("B"), C: getValue("C"), D: getValue("D") };
-    const optionsEn = { A: getValue("AEn"), B: getValue("BEn"), C: getValue("CEn"), D: getValue("DEn") };
-    const optionsOm = { A: getValue("AOm"), B: getValue("BOm"), C: getValue("COm"), D: getValue("DOm") };
-    const correctAnswer = getValue("Correct").toUpperCase();
+    return { question, questionEn, questionOm, options, optionsEn, optionsOm, correctAnswer };
+  });
+}
 
-    const allOptions = [
-      ...Object.values(options),
-      ...Object.values(optionsEn),
-      ...Object.values(optionsOm)
-    ];
+export default function Courses({ user, profile, language = "am" }) {
+  const t = words[language] || words.am;
+  const admin = profile?.role === "admin";
+  const [courses, setCourses] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [lessons, setLessons] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [results, setResults] = useState([]);
+  const [view, setView] = useState("courses");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
+  const [courseTitle, setCourseTitle] = useState("");
+  const [courseDescription, setCourseDescription] = useState("");
+  const [courseTitleEn, setCourseTitleEn] = useState("");
+  const [courseDescriptionEn, setCourseDescriptionEn] = useState("");
+  const [courseTitleOm, setCourseTitleOm] = useState("");
+  const [courseDescriptionOm, setCourseDescriptionOm] = useState("");
+  const [passingScore, setPassingScore] = useState("70");
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [lessonTitle, setLessonTitle] = useState("");
+  const [lessonContent, setLessonContent] = useState("");
+  const [selectedLessonId, setSelectedLessonId] = useState("");
+  const [bulkLessonId, setBulkLessonId] = useState("");
+  const [questionText, setQuestionText] = useState("");
+  const [questionTextEn, setQuestionTextEn] = useState("");
+  const [questionTextOm, setQuestionTextOm] = useState("");
+  const [optionA, setOptionA] = useState("");
+  const [optionB, setOptionB] = useState("");
+  const [optionC, setOptionC] = useState("");
+  const [optionD, setOptionD] = useState("");
+  const [optionAEn, setOptionAEn] = useState("");
+  const [optionBEn, setOptionBEn] = useState("");
+  const [optionCEn, setOptionCEn] = useState("");
+  const [optionDEn, setOptionDEn] = useState("");
+  const [optionAOm, setOptionAOm] = useState("");
+  const [optionBOm, setOptionBOm] = useState("");
+  const [optionCOm, setOptionCOm] = useState("");
+  const [optionDOm, setOptionDOm] = useState("");
+  const [correctAnswer, setCorrectAnswer] = useState("A");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkQuestions, setBulkQuestions] = useState([]);
+  const [bulkError, setBulkError] = useState("");
+  const [examQuestions, setExamQuestions] = useState([]);
+  const [examAnswers, setExamAnswers] = useState({});
+  const [examResult, setExamResult] = useState(null);
+  const [examError, setExamError] = useState("");
+  const [examSaving, setExamSaving] = useState(false);
 
+  function clearCourseForm() {
+    setCourseTitle(""); setCourseDescription("");
+    setCourseTitleEn(""); setCourseDescriptionEn("");
+    setCourseTitleOm(""); setCourseDescriptionOm("");
+    setPassingScore("70"); setEditingCourse(null);
+  }
+
+  function clearQuestionForm() {
+    setQuestionText(""); setQuestionTextEn(""); setQuestionTextOm("");
+    setOptionA(""); setOptionB(""); setOptionC(""); setOptionD("");
+    setOptionAEn(""); setOptionBEn(""); setOptionCEn(""); setOptionDEn("");
+    setOptionAOm(""); setOptionBOm(""); setOptionCOm(""); setOptionDOm("");
+    setCorrectAnswer("A");
+    setSelectedLessonId("");
+  }
+
+  function isDuplicateQuestion(qAm, qEn, qOm) {
+    const nAm = normalizeTextForCheck(qAm);
+    const nEn = normalizeTextForCheck(qEn);
+    const nOm = normalizeTextForCheck(qOm);
+    return questions.some(existing => {
+      const eAm = normalizeTextForCheck(existing.question);
+      const eEn = normalizeTextForCheck(existing.questionEn);
+      const eOm = normalizeTextForCheck(existing.questionOm);
+      return (nAm && eAm === nAm) || (nEn && eEn === nEn) || (nOm && eOm === nOm);
+    });
+  }
+
+  function downloadQuestionsBackup() {
+    if (!selected || !questions.length) return;
+    const backupPayload = {
+      exportedAt: new Date().toISOString(),
+      courseId: selected.id,
+      courseTitle: selected.title,
+      totalQuestions: questions.length,
+      questions: questions.map(q => ({
+        id: q.id,
+        lessonId: q.lessonId || null,
+        lessonTitle: q.lessonTitle || null,
+        question: q.question || "",
+        questionEn: q.questionEn || "",
+        questionOm: q.questionOm || "",
+        options: normalizeOptions(q.options),
+        optionsEn: normalizeOptions(q.optionsEn),
+        optionsOm: normalizeOptions(q.optionsOm),
+        correctAnswer: q.correctAnswer || "A"
+      }))
+    };
+    const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeTitle = (selected.titleEn || selected.title || "course").replace(/[^a-zA-Z0-9_-]/g, "_");
+    link.href = url;
+    link.download = `${safeTitle}_questions_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  async function linkExistingQuestionToLesson(questionId, newLessonId) {
+    if (!admin || !selected) return;
+    const lessonObj = lessons.find(l => l.id === newLessonId);
+    const updateData = {
+      lessonId: lessonObj ? lessonObj.id : null,
+      lessonTitle: lessonObj ? lessonObj.title : null,
+      updatedAt: serverTimestamp()
+    };
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, "courses", selected.id, "questions", questionId), updateData);
+      setQuestions(previous => previous.map(q =>
+        q.id === questionId
+          ? { ...q, lessonId: updateData.lessonId, lessonTitle: updateData.lessonTitle }
+          : q
+      ));
+      setMessage(t.updated);
+    } catch (error) {
+      setMessage(error.message || t.error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function loadCourses() {
+    setLoading(true); setMessage("");
+    try {
+      const snapshot = await getDocs(collection(db, "courses"));
+      setCourses(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+    } catch (error) {
+      setMessage(error.message || t.error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadCourses(); }, []);
+
+  async function saveCourse(event) {
+    event.preventDefault();
+    if (!admin || !user) { setMessage(t.adminOnly); return; }
+    if (!courseTitle.trim() || !courseTitleEn.trim() || !courseTitleOm.trim()) {
+      setMessage(t.required); return;
+    }
+    const score = Number(passingScore);
+    if (!Number.isFinite(score) || score < 1 || score > 100) {
+      setMessage(t.required); return;
+    }
+    setSaving(true); setMessage("");
+    const data = {
+      title: courseTitle.trim(), description: courseDescription.trim(),
+      titleEn: courseTitleEn.trim(), descriptionEn: courseDescriptionEn.trim(),
+      titleOm: courseTitleOm.trim(), descriptionOm: courseDescriptionOm.trim(),
+      passingScore: score, isArchived: false, updatedAt: serverTimestamp()
+    };
+    try {
+      if (editingCourse) {
+        await updateDoc(doc(db, "courses", editingCourse.id), data);
+        setCourses(previous => previous.map(course =>
+          course.id === editingCourse.id ? { ...course, ...data } : course
+        ));
+        setMessage(t.updated);
+      } else {
+        const newData = { ...data, createdBy: user.uid, createdAt: serverTimestamp() };
+        const result = await addDoc(collection(db, "courses"), newData);
+        setCourses(previous => [...previous, { id: result.id, ...newData }]);
+        setMessage(t.added);
+      }
+      clearCourseForm();
+    } catch (error) {
+      setMessage(error.message || t.error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function startEditCourse(course) {
+    setEditingCourse(course);
+    setCourseTitle(course.title || ""); setCourseDescription(course.description || "");
+    setCourseTitleEn(course.titleEn || ""); setCourseDescriptionEn(course.descriptionEn || "");
+    setCourseTitleOm(course.titleOm || ""); setCourseDescriptionOm(course.descriptionOm || "");
+    setPassingScore(String(course.passingScore ?? 70));
+    setMessage(""); setView("courses");
+  }
+
+  async function openCourse(course) {
+    setLoading(true); setMessage("");
+    try {
+      const lessonSnapshot = await getDocs(collection(db, "courses", course.id, "lessons"));
+      setLessons(lessonSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+      setExamQuestions([]); setExamAnswers({}); setExamResult(null); setExamError("");
+      if (admin) {
+        const questionSnapshot = await getDocs(collection(db, "courses", course.id, "questions"));
+        setQuestions(questionSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+      } else {
+        setQuestions([]);
+        try {
+          const examData = await getExamQuestions(course.id);
+          setExamQuestions(Array.isArray(examData.questions) ? examData.questions : []);
+        } catch (examError) {
+          setExamError(examError.message || t.secureExam);
+        }
+      }
+      setSelected(course); setView("course");
+    } catch (error) {
+      setMessage(error.message || t.error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleExamSubmit(event) {
+    event.preventDefault();
+    if (!selected || admin || examSaving) return;
+    if (examQuestions.some(question => !examAnswers[question.id])) {
+      setExamError(language === "en" ? "Please answer every question." : language === "om" ? "Maaloo gaaffii hunda deebisi." : "እባክህ ሁሉንም ጥያቄዎች መልስ።");
+      return;
+    }
+    setExamSaving(true); setExamError("");
+    try {
+አሁን የተፈጠረው ስህተት የእኔ የአማርኛ ማብራሪያ ጽሑፍ ("በስልክዎ ላይ በእጅዎ ኮፒ ሲያደርጉ...") በስህተት ኮድዎ ውስጥ መስመር 221 ላይ ስለተለጠፈ ነው!
+የመጀመሪያውን የላኩልዎትን ፋይል መሰረት በማድረግ፣ አሁን ከመስመር 219 ጀምሮ ያለውን የቀረውን ክፍል ብቻ በአጭሩ እልክልዎታለሁ።
+
+እባክዎ ይህን በጥንቃቄ ያድርጉ (መስመር 219-222ን ለማስተካከል)፦
+
+1. በ src/Courses.jsx ፋይል ውስጥ ወደ መስመር 219 ይሂዱ።
+2. ከመስመር 219 ጀምሮ እስከ ፋይሉ መጨረሻ ድረስ ያለውን ሁሉንም ጽሑፍ ያጥፉት (ከመስመር 1 እስከ 218 ያለውን አይንኩት)።
+3. ከዚህ በታች ያለውን ንጹህ ኮድ ብቻ (ከሳጥኑ ውስጥ ያለውን ብቻ፣ ከሳጥኑ ውጭ ያለውን የአማርኛ ጽሑፍ ሳይጨምሩ) ኮፒ አድርገው እዚያው መስመር 219 ላይ Paste ያድርጉ፦
+jsx
     if (!question || !questionEn || !questionOm ||
       allOptions.some(value => !value) ||
-Use code with caution.
-!OPTION_KEYS.includes(correctAnswer)) {
-throw new Error(
-ጥያቄ ${index + 1}: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።
-);
+      !OPTION_KEYS.includes(correctAnswer)) {
+      throw new Error(
+        `ጥያቄ ${index + 1}: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።`
+      );
+    }
+
+    return { question, questionEn, questionOm, options, optionsEn, optionsOm, correctAnswer };
+  });
 }
-return { question, questionEn, questionOm, options, optionsEn, optionsOm, correctAnswer };
-});
-}
+
 export default function Courses({ user, profile, language = "am" }) {
-const t = words[language] || words.am;
-const admin = profile?.role === "admin";
-const [courses, setCourses] = useState([]);
-const [selected, setSelected] = useState(null);
-const [lessons, setLessons] = useState([]);
-const [questions, setQuestions] = useState([]);
-const [results, setResults] = useState([]);
-const [view, setView] = useState("courses");
-const [loading, setLoading] = useState(true);
-const [saving, setSaving] = useState(false);
-const [message, setMessage] = useState("");
-const [showArchived, setShowArchived] = useState(false);
-const [courseTitle, setCourseTitle] = useState("");
-const [courseDescription, setCourseDescription] = useState("");
-const [courseTitleEn, setCourseTitleEn] = useState("");
-const [courseDescriptionEn, setCourseDescriptionEn] = useState("");
-const [courseTitleOm, setCourseTitleOm] = useState("");
-const [courseDescriptionOm, setCourseDescriptionOm] = useState("");
-const [passingScore, setPassingScore] = useState("70");
-const [editingCourse, setEditingCourse] = useState(null);
-const [lessonTitle, setLessonTitle] = useState("");
-const [lessonContent, setLessonContent] = useState("");
-const [selectedLessonId, setSelectedLessonId] = useState("");
-const [bulkLessonId, setBulkLessonId] = useState("");
-const [questionText, setQuestionText] = useState("");
-const [questionTextEn, setQuestionTextEn] = useState("");
-const [questionTextOm, setQuestionTextOm] = useState("");
-const [optionA, setOptionA] = useState("");
-const [optionB, setOptionB] = useState("");
-const [optionC, setOptionC] = useState("");
-const [optionD, setOptionD] = useState("");
-const [optionAEn, setOptionAEn] = useState("");
-const [optionBEn, setOptionBEn] = useState("");
-const [optionCEn, setOptionCEn] = useState("");
-const [optionDEn, setOptionDEn] = useState("");
-const [optionAOm, setOptionAOm] = useState("");
-const [optionBOm, setOptionBOm] = useState("");
-const [optionCOm, setOptionCOm] = useState("");
-const [optionDOm, setOptionDOm] = useState("");
-const [correctAnswer, setCorrectAnswer] = useState("A");
-const [bulkText, setBulkText] = useState("");
-const [bulkQuestions, setBulkQuestions] = useState([]);
-const [bulkError, setBulkError] = useState("");
-const [examQuestions, setExamQuestions] = useState([]);
-const [examAnswers, setExamAnswers] = useState({});
-const [examResult, setExamResult] = useState(null);
-const [examError, setExamError] = useState("");
-const [examSaving, setExamSaving] = useState(false);
-function clearCourseForm() {
-setCourseTitle(""); setCourseDescription("");
-setCourseTitleEn(""); setCourseDescriptionEn("");
-setCourseTitleOm(""); setCourseDescriptionOm("");
-setPassingScore("70"); setEditingCourse(null);
-}
-function clearQuestionForm() {
-setQuestionText(""); setQuestionTextEn(""); setQuestionTextOm("");
-setOptionA(""); setOptionB(""); setOptionC(""); setOptionD("");
-setOptionAEn(""); setOptionBEn(""); setOptionCEn(""); setOptionDEn("");
-setOptionAOm(""); setOptionBOm(""); setOptionCOm(""); setOptionDOm("");
-setCorrectAnswer("A");
-setSelectedLessonId("");
-}
-function isDuplicateQuestion(qAm, qEn, qOm) {
-const nAm = normalizeTextForCheck(qAm);
-const nEn = normalizeTextForCheck(qEn);
-const nOm = normalizeTextForCheck(qOm);
-return questions.some(existing => {
-const eAm = normalizeTextForCheck(existing.question);
-const eEn = normalizeTextForCheck(existing.questionEn);
-const eOm = normalizeTextForCheck(existing.questionOm);
-return (nAm && eAm === nAm) || (nEn && eEn === nEn) || (nOm && eOm === nOm);
-});
-}
-function downloadQuestionsBackup() {
-if (!selected || !questions.length) return;
-const backupPayload = {
-exportedAt: new Date().toISOString(),
-courseId: selected.id,
-courseTitle: selected.title,
-totalQuestions: questions.length,
-questions: questions.map(q => ({
-id: q.id,
-lessonId: q.lessonId || null,
-lessonTitle: q.lessonTitle || null,
-question: q.question || "",
-questionEn: q.questionEn || "",
-questionOm: q.questionOm || "",
-options: normalizeOptions(q.options),
-optionsEn: normalizeOptions(q.optionsEn),
-optionsOm: normalizeOptions(q.optionsOm),
-correctAnswer: q.correctAnswer || "A"
-}))
-};
-const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: "application/json" });
-const url = URL.createObjectURL(blob);
-const link = document.createElement("a");
-const safeTitle = (selected.titleEn || selected.title || "course").replace(/[^a-zA-Z0-9_-]/g, "_");
-link.href = url;
-link.download = ${safeTitle}_questions_backup_${new Date().toISOString().slice(0, 10)}.json;
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-URL.revokeObjectURL(url);
-}
-async function linkExistingQuestionToLesson(questionId, newLessonId) {
-if (!admin || !selected) return;
-const lessonObj = lessons.find(l => l.id === newLessonId);
-const updateData = {
-lessonId: lessonObj ? lessonObj.id : null,
-lessonTitle: lessonObj ? lessonObj.title : null,
-updatedAt: serverTimestamp()
-};
-setSaving(true);
-try {
-await updateDoc(doc(db, "courses", selected.id, "questions", questionId), updateData);
-setQuestions(previous => previous.map(q =>
-q.id === questionId
-? { ...q, lessonId: updateData.lessonId, lessonTitle: updateData.lessonTitle }
-: q
-));
-setMessage(t.updated);
-} catch (error) {
-setMessage(error.message || t.error);
-} finally {
-setSaving(false);
-}
-}
-async function loadCourses() {
-setLoading(true); setMessage("");
-try {
-const snapshot = await getDocs(collection(db, "courses"));
-setCourses(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
-} catch (error) {
-setMessage(error.message || t.error);
-} finally {
-setLoading(false);
-}
-}
-useEffect(() => { loadCourses(); }, []);
-async function saveCourse(event) {
-event.preventDefault();
-if (!admin || !user) { setMessage(t.adminOnly); return; }
-if (!courseTitle.trim() || !courseTitleEn.trim() || !courseTitleOm.trim()) {
-setMessage(t.required); return;
-}
-const score = Number(passingScore);
-if (!Number.isFinite(score) || score < 1 || score > 100) {
-setMessage(t.required); return;
-}
-setSaving(true); setMessage("");
-const data = {
-title: courseTitle.trim(), description: courseDescription.trim(),
-titleEn: courseTitleEn.trim(), descriptionEn: courseDescriptionEn.trim(),
-titleOm: courseTitleOm.trim(), descriptionOm: courseDescriptionOm.trim(),
-passingScore: score, isArchived: false, updatedAt: serverTimestamp()
-};
-try {
-if (editingCourse) {
-await updateDoc(doc(db, "courses", editingCourse.id), data);
-setCourses(previous => previous.map(course =>
-course.id === editingCourse.id ? { ...course, ...data } : course
-));
-setMessage(t.updated);
-} else {
-const newData = { ...data, createdBy: user.uid, createdAt: serverTimestamp() };
-const result = await addDoc(collection(db, "courses"), newData);
-setCourses(previous => [...previous, { id: result.id, ...newData }]);
-setMessage(t.added);
-}
-clearCourseForm();
-} catch (error) {
-setMessage(error.message || t.error);
-} finally {
-setSaving(false);
-}
-}
-function startEditCourse(course) {
-setEditingCourse(course);
-setCourseTitle(course.title || ""); setCourseDescription(course.description || "");
-setCourseTitleEn(course.titleEn || ""); setCourseDescriptionEn(course.descriptionEn || "");
-setCourseTitleOm(course.titleOm || ""); setCourseDescriptionOm(course.descriptionOm || "");
-setPassingScore(String(course.passingScore ?? 70));
-setMessage(""); setView("courses");
-}
-async function openCourse(course) {
-setLoading(true); setMessage("");
-try {
-const lessonSnapshot = await getDocs(collection(db, "courses", course.id, "lessons"));
-setLessons(lessonSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
-setExamQuestions([]); setExamAnswers({}); setExamResult(null); setExamError("");
-if (admin) {
-const questionSnapshot = await getDocs(collection(db, "courses", course.id, "questions"));
-setQuestions(questionSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
-} else {
-setQuestions([]);
-try {
-const examData = await getExamQuestions(course.id);
-setExamQuestions(Array.isArray(examData.questions) ? examData.questions : []);
-} catch (examError) {
-setExamError(examError.message || t.secureExam);
-}
-}
-setSelected(course); setView("course");
-} catch (error) {
-setMessage(error.message || t.error);
-} finally {
-setLoading(false);
-}
-}
-async function handleExamSubmit(event) {
-event.preventDefault();
-if (!selected || admin || examSaving) return;
-if (examQuestions.some(question => !examAnswers[question.id])) {
-setExamError(language === "en" ? "Please answer every question." : language === "om" ? "Maaloo gaaffii hunda deebisi." : "እባክህ ሁሉንም ጥያቄዎች መልስ።");
-return;
-}
-setExamSaving(true); setExamError("");
-try {
+  const t = words[language] || words.am;
+  const admin = profile?.role === "admin";
+  const [courses, setCourses] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [lessons, setLessons] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [results, setResults] = useState([]);
+  const [view, setView] = useState("courses");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
+  const [courseTitle, setCourseTitle] = useState("");
+  const [courseDescription, setCourseDescription] = useState("");
+  const [courseTitleEn, setCourseTitleEn] = useState("");
+  const [courseDescriptionEn, setCourseDescriptionEn] = useState("");
+  const [courseTitleOm, setCourseTitleOm] = useState("");
+  const [courseDescriptionOm, setCourseDescriptionOm] = useState("");
+  const [passingScore, setPassingScore] = useState("70");
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [lessonTitle, setLessonTitle] = useState("");
+  const [lessonContent, setLessonContent] = useState("");
+  const [selectedLessonId, setSelectedLessonId] = useState("");
+  const [bulkLessonId, setBulkLessonId] = useState("");
+  const [questionText, setQuestionText] = useState("");
+  const [questionTextEn, setQuestionTextEn] = useState("");
+  const [questionTextOm, setQuestionTextOm] = useState("");
+  const [optionA, setOptionA] = useState("");
+  const [optionB, setOptionB] = useState("");
+  const [optionC, setOptionC] = useState("");
+  const [optionD, setOptionD] = useState("");
+  const [optionAEn, setOptionAEn] = useState("");
+  const [optionBEn, setOptionBEn] = useState("");
+  const [optionCEn, setOptionCEn] = useState("");
+  const [optionDEn, setOptionDEn] = useState("");
+  const [optionAOm, setOptionAOm] = useState("");
+  const [optionBOm, setOptionBOm] = useState("");
+  const [optionCOm, setOptionCOm] = useState("");
+  const [optionDOm, setOptionDOm] = useState("");
+  const [correctAnswer, setCorrectAnswer] = useState("A");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkQuestions, setBulkQuestions] = useState([]);
+  const [bulkError, setBulkError] = useState("");
+  const [examQuestions, setExamQuestions] = useState([]);
+  const [examAnswers, setExamAnswers] = useState({});
+  const [examResult, setExamResult] = useState(null);
+  const [examError, setExamError] = useState("");
+  const [examSaving, setExamSaving] = useState(false);
+
+  function clearCourseForm() {
+    setCourseTitle(""); setCourseDescription("");
+    setCourseTitleEn(""); setCourseDescriptionEn("");
+    setCourseTitleOm(""); setCourseDescriptionOm("");
+    setPassingScore("70"); setEditingCourse(null);
+  }
+
+  function clearQuestionForm() {
+    setQuestionText(""); setQuestionTextEn(""); setQuestionTextOm("");
+    setOptionA(""); setOptionB(""); setOptionC(""); setOptionD("");
+    setOptionAEn(""); setOptionBEn(""); setOptionCEn(""); setOptionDEn("");
+    setOptionAOm(""); setOptionBOm(""); setOptionCOm(""); setOptionDOm("");
+    setCorrectAnswer("A");
+    setSelectedLessonId("");
+  }
+
+  function isDuplicateQuestion(qAm, qEn, qOm) {
+    const nAm = normalizeTextForCheck(qAm);
+    const nEn = normalizeTextForCheck(qEn);
+    const nOm = normalizeTextForCheck(qOm);
+    return questions.some(existing => {
+      const eAm = normalizeTextForCheck(existing.question);
+      const eEn = normalizeTextForCheck(existing.questionEn);
+      const eOm = normalizeTextForCheck(existing.questionOm);
+      return (nAm && eAm === nAm) || (nEn && eEn === nEn) || (nOm && eOm === nOm);
+    });
+  }
+
+  function downloadQuestionsBackup() {
+    if (!selected || !questions.length) return;
+    const backupPayload = {
+      exportedAt: new Date().toISOString(),
+      courseId: selected.id,
+      courseTitle: selected.title,
+      totalQuestions: questions.length,
+      questions: questions.map(q => ({
+        id: q.id,
+        lessonId: q.lessonId || null,
+        lessonTitle: q.lessonTitle || null,
+        question: q.question || "",
+        questionEn: q.questionEn || "",
+        questionOm: q.questionOm || "",
+        options: normalizeOptions(q.options),
+        optionsEn: normalizeOptions(q.optionsEn),
+        optionsOm: normalizeOptions(q.optionsOm),
+        correctAnswer: q.correctAnswer || "A"
+      }))
+    };
+    const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeTitle = (selected.titleEn || selected.title || "course").replace(/[^a-zA-Z0-9_-]/g, "_");
+    link.href = url;
+    link.download = `${safeTitle}_questions_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  async function linkExistingQuestionToLesson(questionId, newLessonId) {
+    if (!admin || !selected) return;
+    const lessonObj = lessons.find(l => l.id === newLessonId);
+    const updateData = {
+      lessonId: lessonObj ? lessonObj.id : null,
+      lessonTitle: lessonObj ? lessonObj.title : null,
+      updatedAt: serverTimestamp()
+    };
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, "courses", selected.id, "questions", questionId), updateData);
+      setQuestions(previous => previous.map(q =>
+        q.id === questionId
+          ? { ...q, lessonId: updateData.lessonId, lessonTitle: updateData.lessonTitle }
+          : q
+      ));
+      setMessage(t.updated);
+    } catch (error) {
+      setMessage(error.message || t.error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function loadCourses() {
+    setLoading(true); setMessage("");
+    try {
+      const snapshot = await getDocs(collection(db, "courses"));
+      setCourses(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+    } catch (error) {
+      setMessage(error.message || t.error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadCourses(); }, []);
+
+  async function saveCourse(event) {
+    event.preventDefault();
+    if (!admin || !user) { setMessage(t.adminOnly); return; }
+    if (!courseTitle.trim() || !courseTitleEn.trim() || !courseTitleOm.trim()) {
+      setMessage(t.required); return;
+    }
+    const score = Number(passingScore);
+    if (!Number.isFinite(score) || score < 1 || score > 100) {
+      setMessage(t.required); return;
+    }
+    setSaving(true); setMessage("");
+    const data = {
+      title: courseTitle.trim(), description: courseDescription.trim(),
+      titleEn: courseTitleEn.trim(), descriptionEn: courseDescriptionEn.trim(),
+      titleOm: courseTitleOm.trim(), descriptionOm: courseDescriptionOm.trim(),
+      passingScore: score, isArchived: false, updatedAt: serverTimestamp()
+    };
+    try {
+      if (editingCourse) {
+        await updateDoc(doc(db, "courses", editingCourse.id), data);
+        setCourses(previous => previous.map(course =>
+          course.id === editingCourse.id ? { ...course, ...data } : course
+        ));
+        setMessage(t.updated);
+      } else {
+        const newData = { ...data, createdBy: user.uid, createdAt: serverTimestamp() };
+        const result = await addDoc(collection(db, "courses"), newData);
+        setCourses(previous => [...previous, { id: result.id, ...newData }]);
+        setMessage(t.added);
+      }
+      clearCourseForm();
+    } catch (error) {
+      setMessage(error.message || t.error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function startEditCourse(course) {
+    setEditingCourse(course);
+    setCourseTitle(course.title || ""); setCourseDescription(course.description || "");
+    setCourseTitleEn(course.titleEn || ""); setCourseDescriptionEn(course.descriptionEn || "");
+    setCourseTitleOm(course.titleOm || ""); setCourseDescriptionOm(course.descriptionOm || "");
+    setPassingScore(String(course.passingScore ?? 70));
+    setMessage(""); setView("courses");
+  }
+
+  async function openCourse(course) {
+    setLoading(true); setMessage("");
+    try {
+      const lessonSnapshot = await getDocs(collection(db, "courses", course.id, "lessons"));
+      setLessons(lessonSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+      setExamQuestions([]); setExamAnswers({}); setExamResult(null); setExamError("");
+      if (admin) {
+        const questionSnapshot = await getDocs(collection(db, "courses", course.id, "questions"));
+        setQuestions(questionSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+      } else {
+        setQuestions([]);
+        try {
+          const examData = await getExamQuestions(course.id);
+          setExamQuestions(Array.isArray(examData.questions) ? examData.questions : []);
+        } catch (examError) {
+          setExamError(examError.message || t.secureExam);
+        }
+      }
+      setSelected(course); setView("course");
+    } catch (error) {
+      setMessage(error.message || t.error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleExamSubmit(event) {
+    event.preventDefault();
+    if (!selected || admin || examSaving) return;
+    if (examQuestions.some(question => !examAnswers[question.id])) {
+      setExamError(language === "en" ? "Please answer every question." : language === "om" ? "Maaloo gaaffii hunda deebisi." : "እባክህ ሁሉንም ጥያቄዎች መልስ።");
+      return;
+    }
+    setExamSaving(true); setExamError("");
+    try {
+Use code with caution.
 const result = await submitExam(selected.id, examAnswers, language);
 setExamResult(result);
 setMessage("");
@@ -1220,4 +1255,20 @@ display: "inline-block"
 
 );
 }
- 
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
