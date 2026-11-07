@@ -218,12 +218,13 @@ function parseBulkQuestions(text) {
 
     if (!question || !questionEn || !questionOm ||
 allOptions.some(value => !value) ||
+allOptions.some(value => !value) ||
 !OPTION_KEYS.includes(correctAnswer)) {
-throw new Error(
-ጥያቄ ${index + 1}: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።
-);
+      throw new Error(
+        `ጥያቄ ${index + 1}: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።`
+      );
 }
-return { question, questionEn, questionOm, options, optionsEn, optionsOm, correctAnswer };
+     return { question, questionEn, questionOm, options, optionsEn, optionsOm, correctAnswer };
 });
 }
 export default function Courses({ user, profile, language = "am" }) {
