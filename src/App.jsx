@@ -182,11 +182,6 @@ export default function App() {
 
   const t = languages[language];
 
-  const verificationCode = new URLSearchParams(window.location.search).get("verify");
-  if (verificationCode) {
-    return <CertificateVerification code={verificationCode} language={language} />;
-  }
-
   useEffect(() => {
     let active = true;
 
@@ -332,6 +327,11 @@ export default function App() {
     } finally {
       setBusy(false);
     }
+  }
+
+  const verificationCode = new URLSearchParams(window.location.search).get("verify");
+  if (verificationCode) {
+    return <CertificateVerification code={verificationCode} language={language} />;
   }
 
   if (loading) {
