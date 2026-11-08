@@ -21,6 +21,7 @@ import { auth, db } from "./firebase";
 import Courses from "./Courses";
 import Results from "./Results";
 import Certificates from "./Certificates";
+import Admin from "./Admin";
 
 const languages = {
   am: {
@@ -552,13 +553,11 @@ export default function App() {
         )}
 
         {page === "admin" && isAdmin && (
-          <section className="admin-panel">
-            <h2>{t.adminPanel}</h2>
-            <p>{profile.name || user.email}</p>
-            <button onClick={() => setPage("courses")}>
-              {t.courses}
-            </button>
-          </section>
+          <Admin
+            profile={profile}
+            language={language}
+            onNavigate={setPage}
+          />
         )}
       </section>
     </main>
