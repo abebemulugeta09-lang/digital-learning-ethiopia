@@ -720,8 +720,8 @@ borderRadius: "6px", overflowWrap: "anywhere"
 <b>Correct Answer: {item.correctAnswer}</b>
 </article>
 ))}
-<button type="button" onClick={importBulkQuestions} disabled={saving} style={{ background: "#15803d", color: "#fff", padding: "12px 20px", border: "none", borderRadius: "8px", fontWeight: "bold" }}>
-{saving ? "በመመዝገብ ላይ..." : ✓ Import All${bulkQuestions.length} Questions`}
+<button type="button" onClick={importBulkQuestions} disabled={saving}>
+  {saving ? "በመመዝገብ ላይ..." : `✓ Import All (${bulkQuestions.length})`}
 </button>
 </div>
 )}
