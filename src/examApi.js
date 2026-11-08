@@ -59,3 +59,31 @@ export async function submitExam(courseId, answers, language = "am") {
 
   return data;
 }
+
+
+export async function getLockedCourseIds() {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_BASE}/api/courses/locks`, { headers });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || `Could not load course locks (${response.status}).`);
+  }
+  return Array.isArray(data.lockedCourseIds) ? data.lockedCourseIds : [];
+}
+
+export async function unlockStudentCourse(courseId, userId) {
+  const headers = await getAuthHeaders();
+  const response = await fetch(
+    `${API_BASE}/api/admin/courses/${encodeURIComponent(courseId)}/unlock`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ userId })
+    }
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || `Could not unlock course (${response.status}).`);
+  }
+  return data;
+}
