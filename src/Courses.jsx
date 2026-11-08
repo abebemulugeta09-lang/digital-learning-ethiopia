@@ -703,27 +703,28 @@ borderRadius: "6px", overflowWrap: "anywhere"
   </div>
   {bulkError && <p role="alert" style={{ color: "#b91c1c", background: "#fee2e2", padding: "10px", borderRadius: "6px", overflowWrap: "anywhere" }}>{bulkError}</p>}
 
+ 
 {bulkQuestions.length > 0 && (
-<div style={{ marginTop: "20px" }}>
-<h4 style={{ color: "#15803d" }}>✓ Preview ready – {bulkQuestions.length}</h4>
-{bulkQuestions.map((item, index) => (
-<article key={index} style={{ background: "#fff", color: "#111827", border: "1px solid #cbd5e1", padding: "12px", marginBottom: "10px", borderRadius: "8px" }}>
-<b>{index + 1}. {item.question}</b>
-<p><b>English:</b> {item.questionEn}</p>
-<p><b>Afaan Oromo:</b> {item.questionOm}</p>
-<p><b>Amharic options</b></p>
-{Object.entries(item.options).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
-<p><b>English options</b></p>
-{Object.entries(item.optionsEn).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
-<p><b>Afaan Oromo options</b></p>
-{Object.entries(item.optionsOm).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
-<b>Correct Answer: {item.correctAnswer}</b>
-</article>
-))}
-<button type="button" onClick={importBulkQuestions} disabled={saving}>
-  {saving ? "በመመዝገብ ላይ..." : `✓ Import All (${bulkQuestions.length})`}
-</button>
-</div>
+  <div style={{ marginTop: "20px" }}>
+    <h4 style={{ color: "#15803d" }}>✓ Preview ready – {bulkQuestions.length}</h4>
+    {bulkQuestions.map((item, index) => (
+      <article key={index} style={{ background: "#fff", color: "#111827", border: "1px solid #cbd5e1", padding: "12px", marginBottom: "10px", borderRadius: "8px" }}>
+        <b>{index + 1}. {item.question}</b>
+        <p><b>English:</b> {item.questionEn}</p>
+        <p><b>Afaan Oromo:</b> {item.questionOm}</p>
+        <p><b>Amharic options</b></p>
+        {Object.entries(item.options).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
+        <p><b>English options</b></p>
+        {Object.entries(item.optionsEn).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
+        <p><b>Afaan Oromo options</b></p>
+        {Object.entries(item.optionsOm).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
+        <b>Correct Answer: {item.correctAnswer}</b>
+      </article>
+    ))}
+    <button type="button" onClick={importBulkQuestions} disabled={saving}>
+      {saving ? "በመመዝገብ ላይ..." : `✓ Import All (${bulkQuestions.length})`}
+    </button>
+  </div>
 )}
 </div>
 
