@@ -171,7 +171,7 @@ const lines = block.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
 function getValue(label) {
 const escaped = label.replace(/[.+?^{}()|[\]\\]/g, "\\&");
 const line = lines.find(item =>
-new RegExp("^" + escaped + "\s:", "i").test(item)
+new RegExp("^" + escaped + "\\s*:", "i").test(item)
 );
 return line ? line.replace(/^[^:]+:/, "").trim() : "";
 }
@@ -194,9 +194,7 @@ if (!question || !questionEn || !questionOm ||
 allOptions.some(value => !value) ||
 !["A", "B", "C", "D"].includes(correctAnswer)) {
 throw new Error(
-throw new Error(
-  `ጥያቄ $DIL0: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።`
-);
+  `ጥያቄ ${index + 1}: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።`
 );
 }
 
@@ -477,7 +475,7 @@ if (!bulkQuestions.length) { setBulkError("ከመጀመሪያ Preview አድር�
 if (bulkQuestions.length > 450) {
 setBulkError("በአንድ ጊዜ ከ450 በላይ ጥያቄዎችን ማስገባት አይቻልም。"); return;
 }
-if (!window.confirm(``${bulkQuestions.length} ጥያቄዎችን ወደዚህ ኮርስ ማስገባት ትፈልጋለህ?`)) return;
+if (!window.confirm(`${bulkQuestions.length} ጥያቄዎችን ወደዚህ ኮርስ ማስገባት ትፈልጋለህ?`)) return;
 
 setSaving(true); setBulkError(""); setMessage("");
 try {
@@ -496,7 +494,7 @@ const snapshot = await getDocs(collection(db, "courses", selected.id, "questions
 setQuestions(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
 const count = bulkQuestions.length;
 setBulkText(""); setBulkQuestions([]);
-setMessage(${count} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል።`);
+setMessage(`${count} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል።`);
 } catch (error) {
 setBulkError(error.message || t.error);
 } finally {
@@ -734,7 +732,7 @@ padding: "18px", margin: "25px 0", borderRadius: "12px"
 <textarea
 value={bulkText}
 onChange={e => { setBulkText(e.target.value); setBulkQuestions([]); setBulkError(""); }}
-placeholder={Question: አመራር ምን ማለት ነው?\nQuestionEn: What is leadership?\nQuestionOm: Hoggansi jechuun maali?\nA: ሌሎችን በግድ ማዘዝ\nB: ሰዎችን ወደ ጋራ ግብ መምራት\nC: የግል ጥቅምን ማስቀደም\nD: ውሳኔን ብቻውን መወሰን\nAEn: Forcing others to obey\nBEn: Guiding people toward a shared goal\nCEn: Putting personal interest first\nDEn: Making decisions alone\nAOm: Namoota dirqisiisuu\nBOm: Namoota gara galma waliinii qajeelchuu\nCOm: Faayidaa dhuunfaa dursuu\nDOm: Murtii kophaa kennuu\nCorrect: B}
+placeholder={`Question: አመራር ምን ማለት ነው?\nQuestionEn: What is leadership?\nQuestionOm: Hoggansi jechuun maali?\nA: ሌሎችን በግድ ማዘዝ\nB: ሰዎችን ወደ ጋራ ግብ መምራት\nC: የግል ጥቅምን ማስቀደም\nD: ውሳኔን ብቻውን መወሰን\nAEn: Forcing others to obey\nBEn: Guiding people toward a shared goal\nCEn: Putting personal interest first\nDEn: Making decisions alone\nAOm: Namoota dirqisiisuu\nBOm: Namoota gara galma waliinii qajeelchuu\nCOm: Faayidaa dhuunfaa dursuu\nDOm: Murtii kophaa kennuu\nCorrect: B`}
 rows={20}
 style={{ ...fieldStyle, background: "#fff", color: "#111827" }}
 />
@@ -762,7 +760,7 @@ style={{ ...fieldStyle, background: "#fff", color: "#111827" }}
 </article>
 ))}
 <button type="button" onClick={importBulkQuestions} disabled={saving} style={{ background: "#15803d", color: "#fff", padding: "12px 20px", border: "none", borderRadius: "8px", fontWeight: "bold" }}>
-{saving ? "በመመዝገብ ላይ..." : ✓ Import All${bulkQuestions.length} Questions`}
+{saving ? "በመመዝገብ ላይ..." : `✓ Import All ${bulkQuestions.length} Questions`}
 </button>
 </div>
 )}
@@ -841,7 +839,7 @@ setExamError(error.message || t.secureExam);
 <h4>{index + 1}. {getQuestionText(item, language)}</h4>
 {Object.entries(getQuestionOptions(item, language)).map(([key, value]) => (
 <label key={key} style={{ display: "block", padding: "8px 4px" }}>
-<input type="radio" name={exam-${item.id}} value={key} checked={examAnswers[item.id] === key} onChange={() => setExamAnswers(previous => ({ ...previous, [item.id]: key }))} /> {key}. {value}
+<input type="radio" name={`exam-${item.id}`} value={key} checked={examAnswers[item.id] === key} onChange={() => setExamAnswers(previous => ({ ...previous, [item.id]: key }))} /> {key}. {value}
 </label>
 ))}
 </article>
