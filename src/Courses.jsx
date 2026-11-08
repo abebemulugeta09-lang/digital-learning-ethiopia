@@ -189,12 +189,13 @@ const allOptions = [
  ];
 
 if (!question || !questionEn || !questionOm ||
-allOptions.some(value => !value) ||
-!["A", "B", "C", "D"].includes(correctAnswer)) {
-throw new Error(
-ጥያቄ ${index + 1}: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።`
-);
+  allOptions.some(value => !value) ||
+  !["A", "B", "C", "D"].includes(correctAnswer)) {
+  throw new Error(
+    `ጥያቄ ${index + 1}: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።`
+  );
 }
+
 
 return { question, questionEn, questionOm, options, optionsEn, optionsOm, correctAnswer };
 });
