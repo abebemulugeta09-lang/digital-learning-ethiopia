@@ -18,7 +18,7 @@ writeBatch
 } from "firebase/firestore";
 
 import { db } from "./firebase";
-import { getExamQuestions, submitExam } from "./examApi";
+import { getExamQuestions, submitExam, getLockedCourseIds } from "./examApi";
 
 const words = {
 am: {
@@ -54,6 +54,7 @@ deleted: "ተወግዷል።", archived: "ወደ ማህደር ገብቷል።",
 error: "ስህተት ተፈጥሯል።", required: "እባክህ አስፈላጊውን መረጃ ሙላ።",
 adminOnly: "የአስተዳዳሪ ፈቃድ ያስፈልጋል።", noName: "ተማሪ",
 retry: "እንደገና ሞክር",
+locked: "ይህን ኮርስ አልፈሃል፤ ተቆልፏል",
 secureExam: "ፈተናው በደህንነት ምክንያት ለጊዜው ተዘግቷል።",
 adminQuestions: "የአስተዳዳሪ የጥያቄ አስተዳደር",
 noQuestions: "ጥያቄዎች አልተጨመሩም።", archivedList: "የተመዘገቡ ኮርሶች"
@@ -88,6 +89,7 @@ deleted: "Removed successfully.", archived: "Course archived successfully.",
 error: "An error occurred.", required: "Please complete all required fields.",
 adminOnly: "Administrator permission is required.", noName: "Student",
 retry: "Retry",
+locked: "Completed and locked",
 secureExam: "Exams are temporarily unavailable while secure exam services are being configured.",
 adminQuestions: "Administrator Question Management",
 noQuestions: "No questions have been added.", archivedList: "Archived courses"
@@ -123,7 +125,7 @@ added: "Milkaa'inaan dabalameera.", updated: "Milkaa'inaan fooyya'eera.",
 deleted: "Milkaa'inaan haqameera.", archived: "Kuusaa keessa galfameera.",
 error: "Dogoggorri uumameera.", required: "Maaloo odeeffannoo barbaachisaa guuti.",
 adminOnly: "Eeyyamni bulchiinsaa barbaachisa.", noName: "Barataa",
-retry: "Irra deebi'i", secureExam: "Qormaanni yeroo ammaa nageenyaaf cufameera.",
+retry: "Irra deebi'i", locked: "Barnoota kana darbiteetta; cufameera", secureExam: "Qormaanni yeroo ammaa nageenyaaf cufameera.",
 adminQuestions: "Bulchiinsa gaaffilee", noQuestions: "Gaaffileen hin dabalamin.",
 archivedList: "Barnoota kuusaa keessa jiru"
 }
@@ -240,6 +242,7 @@ const [loading, setLoading] = useState(true);
 const [saving, setSaving] = useState(false);
 const [message, setMessage] = useState("");
 const [showArchived, setShowArchived] = useState(false);
+const [lockedCourseIds, setLockedCourseIds] = useState([]);
 
 const [courseTitle, setCourseTitle] = useState("");
 const [courseDescription, setCourseDescription] = useState("");
@@ -303,6 +306,14 @@ setLoading(true); setMessage("");
 try {
 const snapshot = await getDocs(collection(db, "courses"));
 setCourses(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+if (!admin && user?.uid) {
+  try {
+    const lockedIds = await getLockedCourseIds();
+    setLockedCourseIds(lockedIds);
+  } catch (lockError) {
+    console.warn("Course lock status could not be loaded:", lockError);
+  }
+}
 } catch (error) {
 setMessage(error.message || t.error);
 } finally {
@@ -362,6 +373,10 @@ setMessage(""); setView("courses");
 }
 
 async function openCourse(course) {
+if (!admin && lockedCourseIds.includes(course.id)) {
+  setMessage(t.locked);
+  return;
+}
 setLoading(true); setMessage("");
 try {
 const lessonSnapshot = await getDocs(collection(db, "courses", course.id, "lessons"));
@@ -416,6 +431,9 @@ setExamSaving(true); setExamError("");
 try {
 const result = await submitExam(selected.id, examAnswers, language);
 setExamResult(result);
+if (result.passed && result.certificateIssued) {
+  setLockedCourseIds(previous => [...new Set([...previous, selected.id])]);
+}
 setMessage("");
 } catch (error) {
 setExamError(error.message || t.error);
@@ -679,7 +697,11 @@ borderRadius: "6px", overflowWrap: "anywhere"
 <h3>{getCourseTitle(course, language)}</h3>
 <p>{getCourseDescription(course, language)}</p>
 <p>{t.passing}: {course.passingScore ?? 70}%</p>
-<button onClick={() => openCourse(course)}>{t.open}</button>
+{!admin && lockedCourseIds.includes(course.id) ? (
+  <p role="status" style={{ color: "#166534", fontWeight: "bold" }}>{t.locked}</p>
+) : (
+  <button onClick={() => openCourse(course)}>{t.open}</button>
+)}
 {admin && !showArchived && <>
 <button onClick={() => startEditCourse(course)}>{t.edit}</button>
 <button onClick={() => archiveCourse(course.id)} disabled={saving}>{t.archive}</button>
