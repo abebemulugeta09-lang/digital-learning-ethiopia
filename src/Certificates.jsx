@@ -83,9 +83,21 @@ export default function Certificates({ user, language = "am" }) {
           ...item.data()
         }));
 
+        function getTimestamp(value) {
+          if (!value) return 0;
+          if (typeof value === "string" || typeof value === "number") {
+            const parsed = new Date(value).getTime();
+            return Number.isFinite(parsed) ? parsed : 0;
+          }
+          if (typeof value.toMillis === "function") return value.toMillis();
+          if (typeof value.seconds === "number") return value.seconds * 1000;
+          if (typeof value._seconds === "number") return value._seconds * 1000;
+          return 0;
+        }
+
         items.sort((a, b) => {
-          const dateA = a.issuedAt?.seconds || a.createdAt?.seconds || 0;
-          const dateB = b.issuedAt?.seconds || b.createdAt?.seconds || 0;
+          const dateA = getTimestamp(a.issuedAt || a.createdAt);
+          const dateB = getTimestamp(b.issuedAt || b.createdAt);
           return dateB - dateA;
         });
 
@@ -107,10 +119,24 @@ export default function Certificates({ user, language = "am" }) {
 
   function formatDate(certificate) {
     const timestamp = certificate.issuedAt || certificate.createdAt;
+    if (!timestamp) return "—";
 
-    if (!timestamp?.seconds) return "—";
+    let date;
+    if (typeof timestamp === "string" || typeof timestamp === "number") {
+      date = new Date(timestamp);
+    } else if (typeof timestamp.toDate === "function") {
+      date = timestamp.toDate();
+    } else if (typeof timestamp.seconds === "number") {
+      date = new Date(timestamp.seconds * 1000);
+    } else if (typeof timestamp._seconds === "number") {
+      date = new Date(timestamp._seconds * 1000);
+    } else {
+      return "—";
+    }
 
-    return new Date(timestamp.seconds * 1000).toLocaleDateString(
+    if (Number.isNaN(date.getTime())) return "—";
+
+    return date.toLocaleDateString(
       language === "am" ? "am-ET" :
       language === "om" ? "om-ET" : "en"
     );
