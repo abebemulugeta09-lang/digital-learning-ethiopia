@@ -63,6 +63,21 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // Student course learning progress
+    match /courseProgress/{progressId} {
+      allow get: if isAdmin()
+        || (signedIn() && progressId.matches('^' + request.auth.uid + '_.*'));
+      allow list: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId);
+      allow delete: if isAdmin();
+    }
+
     // Certificates
     match /certificates/{certificateId} {
       allow read: if signedIn()
