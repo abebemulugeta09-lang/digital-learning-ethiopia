@@ -19,7 +19,7 @@ const text = {
     status: "ሁኔታ",
     passed: "አልፈዋል",
     failed: "አላለፉም",
-    date: "ቀን",
+    date: "የፈተና ቀን",
     error: "ውጤቶችን መጫን አልተቻለም።"
   },
   en: {
@@ -32,7 +32,7 @@ const text = {
     status: "Status",
     passed: "Passed",
     failed: "Failed",
-    date: "Date",
+    date: "Exam date",
     error: "Could not load results."
   },
   om: {
@@ -45,10 +45,30 @@ const text = {
     status: "Haala",
     passed: "Darban",
     failed: "Hin darbne",
-    date: "Guyyaa",
+    date: "Guyyaa qormaataa",
     error: "Bu'aa fe'uun hin danda'amne."
   }
 };
+
+function getDateValue(value) {
+  if (!value) return null;
+
+  let date;
+
+  if (typeof value === "string" || typeof value === "number") {
+    date = new Date(value);
+  } else if (typeof value.toDate === "function") {
+    date = value.toDate();
+  } else if (typeof value.seconds === "number") {
+    date = new Date(value.seconds * 1000);
+  } else if (typeof value._seconds === "number") {
+    date = new Date(value._seconds * 1000);
+  } else {
+    return null;
+  }
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 export default function Results({ user, language = "am" }) {
   const [results, setResults] = useState([]);
@@ -84,12 +104,14 @@ export default function Results({ user, language = "am" }) {
         }));
 
         items.sort((a, b) => {
-          const dateA = a.createdAt?.seconds || 0;
-          const dateB = b.createdAt?.seconds || 0;
+          const dateA = getDateValue(a.createdAt)?.getTime() || 0;
+          const dateB = getDateValue(b.createdAt)?.getTime() || 0;
           return dateB - dateA;
         });
 
-        if (active) setResults(items);
+        if (active) {
+          setResults(items);
+        }
       } catch (err) {
         console.error("Results error:", err);
         if (active) setError(t.error);
@@ -105,13 +127,28 @@ export default function Results({ user, language = "am" }) {
     };
   }, [user?.uid, language]);
 
-  function formatDate(timestamp) {
-    if (!timestamp?.seconds) return "—";
+  function formatDate(value) {
+    const date = getDateValue(value);
 
-    return new Date(timestamp.seconds * 1000).toLocaleDateString(
-      language === "am" ? "am-ET" :
-      language === "om" ? "om-ET" : "en"
-    );
+    if (!date) return "—";
+
+    try {
+      const locale =
+        language === "am" ? "am-ET" :
+        language === "om" ? "om-ET" : "en-GB";
+
+      return new Intl.DateTimeFormat(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "Africa/Addis_Ababa"
+      }).format(date);
+    } catch {
+      return date.toLocaleString();
+    }
   }
 
   return (
@@ -126,12 +163,13 @@ export default function Results({ user, language = "am" }) {
         <p>{t.empty}</p>
       )}
 
-      {!loading && results.map(result => (
+      {!loading && !error && results.map(result => (
         <article className="result-card" key={result.id}>
           <h3>{result.courseTitle || t.course}</h3>
 
           <p>
-            <strong>{t.score}:</strong> {result.score ?? 0}%
+            <strong>{t.score}:</strong>{" "}
+            {result.score ?? 0}%
           </p>
 
           <p>
