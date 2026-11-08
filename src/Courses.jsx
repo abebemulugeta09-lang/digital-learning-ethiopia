@@ -452,15 +452,17 @@ setBulkError(error.message || t.error);
 }
 
 async function importBulkQuestions() {
-if (!admin || !user || !selected) { setBulkError(t.adminOnly); return; }
-if (!bulkQuestions.length) { setBulkError("ከመጀመሪያ Preview አድርግ።"); return; }
-if (bulkQuestions.length > 450) {
-setBulkError("በአንድ ጊዜ ከ450 በላይ ጥያቄዎችን ማስገባት አይቻልም。"); return;
-}
-if (!window.confirm(``${bulkQuestions.length} ጥያቄዎችን ወደዚህ ኮርስ ማስገባት ትፈልጋለህ?`)) return;
+  if (!admin || !user || !selected) { setBulkError(t.adminOnly); return; }
+  if (!bulkQuestions.length) { setBulkError("ከመጀመሪያ Preview አድርግ።"); return; }
+  if (bulkQuestions.length > 450) {
+    setBulkError("በአንድ ጊዜ ከ450 በላይ ጥያቄዎችን ማስገባት አይቻልም።"); 
+    return;
+  }
+  if (!window.confirm(`${bulkQuestions.length} ጥያቄዎችን ወደዚህ ኮርስ ማስገባት ትፈልጋለህ?`)) return;
 
-setSaving(true); setBulkError(""); setMessage("");
-try {
+  setSaving(true); setBulkError(""); setMessage("");
+  try {
+
 const batch = writeBatch(db);
 bulkQuestions.forEach(item => {
 const questionRef = doc(collection(db, "courses", selected.id, "questions"));
