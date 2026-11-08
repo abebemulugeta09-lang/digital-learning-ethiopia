@@ -476,11 +476,11 @@ correctAnswer: item.correctAnswer, createdBy: user.uid, createdAt: serverTimesta
 });
 await batch.commit();
 
-const snapshot = await getDocs(collection(db, "courses", selected.id, "questions"));
-setQuestions(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
-const count = bulkQuestions.length;
-setBulkText(""); setBulkQuestions([]);
-setMessage(`${count} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል።`);
+  const snapshot = await getDocs(collection(db, "courses", selected.id, "questions"));
+  setQuestions(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+  const count = bulkQuestions.length;
+  setBulkText(""); setBulkQuestions([]);
+  setMessage(`${count} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል።`);
 } catch (error) {
   setBulkError(error.message || t.error);
 } finally {
@@ -489,18 +489,19 @@ setMessage(`${count} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል�
 }
 
 async function removeQuestion(questionId) {
-if (!admin || !selected || !window.confirm(t.confirmDelete)) return;
-setSaving(true);
-try {
-await deleteDoc(doc(db, "courses", selected.id, "questions", questionId));
-setQuestions(previous => previous.filter(item => item.id !== questionId));
-setMessage(t.deleted);
-} catch (error) {
-setMessage(error.message || t.error);
-} finally {
-setSaving(false);
+  if (!admin || !selected || !window.confirm(t.confirmDelete)) return;
+  setSaving(true);
+  try {
+    await deleteDoc(doc(db, "courses", selected.id, "questions", questionId));
+    setQuestions(previous => previous.filter(item => item.id !== questionId));
+    setMessage(t.deleted);
+  } catch (error) {
+    setMessage(error.message || t.error);
+  } finally {
+    setSaving(false);
+  }
 }
-}
+
 
 async function archiveCourse(courseId) {
 if (!admin || !window.confirm(t.confirmArchive)) return;
