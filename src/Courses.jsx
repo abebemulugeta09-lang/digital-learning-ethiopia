@@ -480,11 +480,11 @@ const snapshot = await getDocs(collection(db, "courses", selected.id, "questions
 setQuestions(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
 const count = bulkQuestions.length;
 setBulkText(""); setBulkQuestions([]);
-setMessage(${count} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል።`);
+setMessage(`${count} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል።`);
 } catch (error) {
-setBulkError(error.message || t.error);
+  setBulkError(error.message || t.error);
 } finally {
-setSaving(false);
+  setSaving(false);
 }
 }
 
