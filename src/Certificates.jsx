@@ -7,6 +7,7 @@ import {
   where
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { QRCodeSVG } from "qrcode.react";
 
 const translations = {
   am: {
@@ -20,7 +21,8 @@ const translations = {
     print: "ሰርተፊኬቱን አትም",
     error: "ሰርተፊኬቶችን መጫን አልተቻለም።",
     issued: "የተሳካ ምስክር ወረቀት",
-    organization: "Digital Learning Ethiopia"
+    organization: "Digital Learning Ethiopia",
+    scan: "የሰርተፊኬት መለያ QR ኮድ"
   },
   en: {
     title: "My Certificates",
@@ -33,7 +35,8 @@ const translations = {
     print: "Print certificate",
     error: "Could not load certificates.",
     issued: "Certificate of Achievement",
-    organization: "Digital Learning Ethiopia"
+    organization: "Digital Learning Ethiopia",
+    scan: "Certificate QR identifier"
   },
   om: {
     title: "Ragaa Koo",
@@ -46,7 +49,8 @@ const translations = {
     print: "Ragaa maxxansi",
     error: "Ragaa fe'uun hin danda'amne.",
     issued: "Ragaa Milkaa'inaa",
-    organization: "Digital Learning Ethiopia"
+    organization: "Digital Learning Ethiopia",
+    scan: "Koodii QR ragaa"
   }
 };
 
@@ -183,6 +187,17 @@ export default function Certificates({ user, language = "am" }) {
               <p>
                 {t.date}: {formatDate(certificate)}
               </p>
+
+              <div className="certificate-qr" style={{ margin: "24px auto", textAlign: "center" }}>
+                <p>{t.scan}</p>
+                <QRCodeSVG
+                  value={`DLE-CERTIFICATE:${certificate.certificateCode || certificate.id}`}
+                  size={160}
+                  level="H"
+                  includeMargin={true}
+                  title={t.scan}
+                />
+              </div>
             </div>
 
             <button
