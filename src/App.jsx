@@ -21,6 +21,7 @@ import { auth, db } from "./firebase";
 import Courses from "./Courses";
 import Results from "./Results";
 import Certificates from "./Certificates";
+import CertificateVerification from "./CertificateVerification";
 import Admin from "./Admin";
 
 const languages = {
@@ -180,6 +181,11 @@ export default function App() {
   const [busy, setBusy] = useState(false);
 
   const t = languages[language];
+
+  const verificationCode = new URLSearchParams(window.location.search).get("verify");
+  if (verificationCode) {
+    return <CertificateVerification code={verificationCode} language={language} />;
+  }
 
   useEffect(() => {
     let active = true;
