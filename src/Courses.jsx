@@ -756,11 +756,11 @@ setMessage(progressError.message || t.error);
 <p><b>English:</b> {item.questionEn || "(not translated)"}</p>
 <p><b>Afaan Oromo:</b> {item.questionOm || "(not translated)"}</p>
 <h4>Amharic options</h4>
-{Object.entries(item.options || {}).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
+{Object.entries(getQuestionOptions(item, "am")).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
 <h4>English options</h4>
-{Object.entries(item.optionsEn || {}).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
+{Object.entries(getQuestionOptions(item, "en")).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
 <h4>Afaan Oromo options</h4>
-{Object.entries(item.optionsOm || {}).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
+{Object.entries(getQuestionOptions(item, "om")).map(([key, value]) => <p key={key}>{key}. {value}</p>)}
 <p>{t.correct}: {item.correctAnswer}</p>
 <button onClick={() => removeQuestion(item.id)} disabled={saving}>{t.delete}</button>
 </article>
