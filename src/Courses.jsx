@@ -462,30 +462,27 @@ async function importBulkQuestions() {
 
   setSaving(true); setBulkError(""); setMessage("");
   try {
-setSaving(true); setBulkError(""); setMessage("");
-  try {
+    const batch = writeBatch(db);
+    bulkQuestions.forEach(item => {
+      const questionRef = doc(collection(db, "courses", selected.id, "questions"));
+      batch.set(questionRef, {
+        question: item.question, questionEn: item.questionEn, questionOm: item.questionOm,
+        options: item.options, optionsEn: item.optionsEn, optionsOm: item.optionsOm,
+        correctAnswer: item.correctAnswer, createdBy: user.uid, createdAt: serverTimestamp()
+      });
+    });
+    await batch.commit();
 
-const batch = writeBatch(db);
-bulkQuestions.forEach(item => {
-const questionRef = doc(collection(db, "courses", selected.id, "questions"));
-batch.set(questionRef, {
-question: item.question, questionEn: item.questionEn, questionOm: item.questionOm,
-options: item.options, optionsEn: item.optionsEn, optionsOm: item.optionsOm,
-correctAnswer: item.correctAnswer, createdBy: user.uid, createdAt: serverTimestamp()
-});
-});
-await batch.commit();
-
-  const snapshot = await getDocs(collection(db, "courses", selected.id, "questions"));
-  setQuestions(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
-  const count = bulkQuestions.length;
-  setBulkText(""); setBulkQuestions([]);
-  setMessage(`${count} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል።`);
-} catch (error) {
-  setBulkError(error.message || t.error);
-} finally {
-  setSaving(false);
-}
+    const snapshot = await getDocs(collection(db, "courses", selected.id, "questions"));
+    setQuestions(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+    const count = bulkQuestions.length;
+    setBulkText(""); setBulkQuestions([]);
+    setMessage(`${count} ጥያቄዎች በተሳካ ሁኔታ ተጨምረዋል።`);
+  } catch (error) {
+    setBulkError(error.message || t.error);
+  } finally {
+    setSaving(false);
+  }
 }
 
 async function removeQuestion(questionId) {
@@ -501,7 +498,6 @@ async function removeQuestion(questionId) {
     setSaving(false);
   }
 }
-
 
 async function archiveCourse(courseId) {
 if (!admin || !window.confirm(t.confirmArchive)) return;
