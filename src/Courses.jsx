@@ -462,6 +462,8 @@ async function importBulkQuestions() {
 
   setSaving(true); setBulkError(""); setMessage("");
   try {
+setSaving(true); setBulkError(""); setMessage("");
+  try {
 
 const batch = writeBatch(db);
 bulkQuestions.forEach(item => {
