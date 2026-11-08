@@ -685,23 +685,23 @@ borderRadius: "6px", overflowWrap: "anywhere"
 ))}
 
 <div style={{
-border: "2px solid #2563eb", background: "#f5f8ff", color: "#172554",
-padding: "18px", margin: "25px 0", borderRadius: "12px"
+  border: "2px solid #2563eb", background: "#f5f8ff", color: "#172554",
+  padding: "18px", margin: "25px 0", borderRadius: "12px"
 }}>
-<h3>📥 Bulk Import Questions – 3 Languages</h3>
-<p>እያንዳንዱ ጥያቄ በሶስቱም ቋንቋዎች መሞላት አለበት። ጥያቄዎቹን ከታች ባለው ቅርጸት አስገባ፣ Preview አድርግ፣ ከመረመርክ በኋላ Import All ተጫን።</p>
-<textarea
-value={bulkText}
-onChange={e => { setBulkText(e.target.value); setBulkQuestions([]); setBulkError(""); }}
-placeholder={Question: አመራር ምን ማለት ነው?\nQuestionEn: What is leadership?\nQuestionOm: Hoggansi jechuun maali?\nA: ሌሎችን በግድ ማዘዝ\nB: ሰዎችን ወደ ጋራ ግብ መምራት\nC: የግል ጥቅምን ማስቀደም\nD: ውሳኔን ብቻውን መወሰን\nAEn: Forcing others to obey\nBEn: Guiding people toward a shared goal\nCEn: Putting personal interest first\nDEn: Making decisions alone\nAOm: Namoota dirqisiisuu\nBOm: Namoota gara galma waliinii qajeelchuu\nCOm: Faayidaa dhuunfaa dursuu\nDOm: Murtii kophaa kennuu\nCorrect: B}
-rows={20}
-style={{ ...fieldStyle, background: "#fff", color: "#111827" }}
-/>
-<div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-<button type="button" onClick={previewBulkQuestions} disabled={saving || !bulkText.trim()}>👁 Preview Questions</button>
-<button type="button" onClick={() => { setBulkText(""); setBulkQuestions([]); setBulkError(""); }} disabled={saving}>Clear</button>
-</div>
-{bulkError && <p role="alert" style={{ color: "#b91c1c", background: "#fee2e2", padding: "10px", borderRadius: "6px", overflowWrap: "anywhere" }}>{bulkError}</p>}
+  <h3>📥 Bulk Import Questions – 3 Languages</h3>
+  <p>እያንዳንዱ ጥያቄ በሶስቱም ቋንቋዎች መሞላት አለበት። ጥያቄዎቹን ከታች ባለው ቅርጸት አስገባ፣ Preview አድርግ፣ ከመረመርክ በኋላ Import All ተጫን።</p>
+  <textarea
+    value={bulkText}
+    onChange={e => { setBulkText(e.target.value); setBulkQuestions([]); setBulkError(""); }}
+    placeholder={"Question: አመራር ምን ማለት ነው?\nQuestionEn: What is leadership?\nQuestionOm: Hoggansi jechuun maali?\nA: ሌሎችን በግድ ማዘዝ\nB: ሰዎችን ወደ ጋራ ግብ መምራት\nC: የግል ጥቅምን ማስቀደም\nD: ውሳኔን ብቻውን መወሰን\nAEn: Forcing others to obey\nBEn: Guiding people toward a shared goal\nCEn: Putting personal interest first\nDEn: Making decisions alone\nAOm: Namoota dirqisiisuu\nBOm: Namoota gara galma waliinii qajeelchuu\nCOm: Faayidaa dhuunfaa dursuu\nDOm: Murtii kophaa kennuu\nCorrect: B"}
+    rows={20}
+    style={{ ...fieldStyle, background: "#fff", color: "#111827" }}
+  />
+  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+    <button type="button" onClick={previewBulkQuestions} disabled={saving || !bulkText.trim()}>👁 Preview Questions</button>
+    <button type="button" onClick={() => { setBulkText(""); setBulkQuestions([]); setBulkError(""); }} disabled={saving}>Clear</button>
+  </div>
+  {bulkError && <p role="alert" style={{ color: "#b91c1c", background: "#fee2e2", padding: "10px", borderRadius: "6px", overflowWrap: "anywhere" }}>{bulkError}</p>}
 
 {bulkQuestions.length > 0 && (
 <div style={{ marginTop: "20px" }}>
