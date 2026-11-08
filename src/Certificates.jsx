@@ -191,7 +191,7 @@ export default function Certificates({ user, language = "am" }) {
               <div className="certificate-qr" style={{ margin: "24px auto", textAlign: "center" }}>
                 <p>{t.scan}</p>
                 <QRCodeSVG
-                  value={`DLE-CERTIFICATE:${certificate.certificateCode || certificate.id}`}
+                  value={`${window.location.origin}/?verify=${encodeURIComponent(certificate.certificateCode || certificate.id)}`}
                   size={160}
                   level="H"
                   includeMargin={true}
