@@ -6,6 +6,8 @@ import {
 collection,
 addDoc,
 getDocs,
+getDoc,
+setDoc,
 deleteDoc,
 updateDoc,
 doc,
@@ -207,6 +209,7 @@ const admin = profile?.role === "admin";
 const [courses, setCourses] = useState([]);
 const [selected, setSelected] = useState(null);
 const [lessons, setLessons] = useState([]);
+const [completedLessonIds, setCompletedLessonIds] = useState([]);
 const [questions, setQuestions] = useState([]);
 const [results, setResults] = useState([]);
 const [view, setView] = useState("courses");
@@ -335,7 +338,23 @@ async function openCourse(course) {
 setLoading(true); setMessage("");
 try {
 const lessonSnapshot = await getDocs(collection(db, "courses", course.id, "lessons"));
-setLessons(lessonSnapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+const loadedLessons = lessonSnapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+setLessons(loadedLessons);
+
+if (!admin && user?.uid) {
+const progressId = user.uid + "_" + course.id;
+const progressSnapshot = await getDoc(doc(db, "courseProgress", progressId));
+const savedProgress = progressSnapshot.exists() ? progressSnapshot.data() : {};
+const savedCompleted = Array.isArray(savedProgress.completedLessonIds) ? savedProgress.completedLessonIds : [];
+setCompletedLessonIds(savedCompleted);
+await setDoc(doc(db, "courseProgress", progressId), {
+userId: user.uid, courseId: course.id, courseTitle: getCourseTitle(course, "am"),
+totalLessons: loadedLessons.length, completedLessonIds: savedCompleted,
+lastAccessedAt: serverTimestamp(), updatedAt: serverTimestamp()
+}, { merge: true });
+} else {
+setCompletedLessonIds([]);
+}
 
 // Admins manage questions directly. Students receive sanitized questions from the secure API.
 setExamQuestions([]); setExamAnswers({}); setExamResult(null); setExamError("");
@@ -648,6 +667,28 @@ borderRadius: "6px", overflowWrap: "anywhere"
 <article key={lesson.id} style={sectionStyle}>
 <h4>{lesson.title}</h4>
 <p style={{ whiteSpace: "pre-wrap" }}>{lesson.content}</p>
+{!admin && (
+<label style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "12px" }}>
+<input type="checkbox" checked={completedLessonIds.includes(lesson.id)}
+onChange={async event => {
+const checked = event.target.checked;
+const nextIds = checked ? [...new Set([...completedLessonIds, lesson.id])]
+  : completedLessonIds.filter(id => id !== lesson.id);
+setCompletedLessonIds(nextIds);
+try {
+await setDoc(doc(db, "courseProgress", user.uid + "_" + selected.id), {
+userId: user.uid, courseId: selected.id, courseTitle: getCourseTitle(selected, "am"),
+totalLessons: lessons.length, completedLessonIds: nextIds,
+lastAccessedAt: serverTimestamp(), updatedAt: serverTimestamp()
+}, { merge: true });
+} catch (progressError) {
+setCompletedLessonIds(completedLessonIds);
+setMessage(progressError.message || t.error);
+}
+}} />
+{language === "en" ? "Mark lesson as completed" : language === "om" ? "Kutaa xumurame mallatteessi" : "ይህን የትምህርት ክፍል ጨርሻለሁ"}
+</label>
+)}
 {admin && <button onClick={() => removeLesson(lesson.id)} disabled={saving}>{t.delete}</button>}
 </article>
 ))}
