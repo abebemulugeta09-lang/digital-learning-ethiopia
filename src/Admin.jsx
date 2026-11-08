@@ -8,6 +8,7 @@ import {
   getDoc
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { unlockStudentCourse } from "./examApi";
 
 const translations = {
   am: {
@@ -17,6 +18,8 @@ const translations = {
     results: "የፈተና ውጤቶች",
     certificates: "ሰርተፊኬቶች",
     certificateReport: "የሰርተፍኬት ሪፖርት",
+    unlockCourse: "ኮርሱን እንደገና ክፈት",
+    unlockSuccess: "ኮርሱ እንደገና ተከፍቷል።",
     certificateCode: "የሰርተፍኬት ቁጥር",
     issuedDate: "የተሰጠበት ቀን",
     noCertificates: "እስካሁን ሰርተፍኬት አልተሰጠም።",
@@ -50,6 +53,8 @@ const translations = {
     results: "Exam Results",
     certificates: "Certificates",
     certificateReport: "Certificate Report",
+    unlockCourse: "Reopen course",
+    unlockSuccess: "Course reopened successfully.",
     certificateCode: "Certificate number",
     issuedDate: "Issue date",
     noCertificates: "No certificates have been issued yet.",
@@ -83,6 +88,8 @@ const translations = {
     results: "Bu'aa Qormaataa",
     certificates: "Ragaa",
     certificateReport: "Gabaasa Ragaa",
+    unlockCourse: "Barnoota irra deebi'i bani",
+    unlockSuccess: "Barnoonni irra deebi'ee banameera.",
     certificateCode: "Lakkoofsa ragaa",
     issuedDate: "Guyyaa kenname",
     noCertificates: "Ammaaf ragaan hin kennamne.",
@@ -176,6 +183,34 @@ export default function Admin({
   const [learningProgress, setLearningProgress] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [unlockingId, setUnlockingId] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
+
+  async function handleUnlockCourse(item) {
+    if (!item.userId || !item.courseId) {
+      setError("Student ID or course ID is missing.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Reopen "${item.courseTitle || item.courseId}" for ${item.studentName || item.userId}?`
+    );
+    if (!confirmed) return;
+
+    const key = `${item.userId}_${item.courseId}`;
+    setUnlockingId(key);
+    setError("");
+    setActionMessage("");
+
+    try {
+      await unlockStudentCourse(item.courseId, item.userId);
+      setActionMessage(t.unlockSuccess);
+    } catch (unlockError) {
+      setError(unlockError.message || t.error);
+    } finally {
+      setUnlockingId("");
+    }
+  }
 
   async function loadDashboard() {
     if (profile?.role !== "admin") return;
@@ -424,6 +459,7 @@ export default function Admin({
           {t.error} {error}
         </p>
       )}
+      {actionMessage && <p role="status">{actionMessage}</p>}
 
       <div className="admin-dashboard-grid">
         {cards.map(card => (
@@ -593,6 +629,17 @@ export default function Admin({
                   <strong>{t.issuedDate}:</strong>{" "}
                   {formatDate(item.issuedAt || item.createdAt)}
                 </p>
+                {item.userId && item.courseId && (
+                  <button
+                    type="button"
+                    onClick={() => handleUnlockCourse(item)}
+                    disabled={unlockingId === `${item.userId}_${item.courseId}`}
+                  >
+                    {unlockingId === `${item.userId}_${item.courseId}`
+                      ? t.loading
+                      : t.unlockCourse}
+                  </button>
+                )}
               </article>
             ))}
           </div>
