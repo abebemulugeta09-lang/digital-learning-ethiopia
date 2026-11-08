@@ -194,7 +194,9 @@ if (!question || !questionEn || !questionOm ||
 allOptions.some(value => !value) ||
 !["A", "B", "C", "D"].includes(correctAnswer)) {
 throw new Error(
-ጥያቄ ${index + 1}: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።`
+throw new Error(
+  `ጥያቄ $DIL0: በሶስቱም ቋንቋዎች ጥያቄዎችንና ምርጫዎችን ሙላ።`
+);
 );
 }
 
