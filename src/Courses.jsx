@@ -29,8 +29,12 @@ titleOm: "የአፋን ኦሮሞ ርዕስ", descriptionOm: "የአፋን ኦሮ
 save: "አስቀምጥ", update: "አስተካክል", edit: "አርም", delete: "አስወግድ",
 archive: "ወደ ማህደር አስገባ", cancel: "ተወው", open: "ክፈት", back: "ተመለስ",
 loading: "በመጫን ላይ...", empty: "ምንም ትምህርት አልተገኘም።",
-lessons: "የትምህርት ክፍሎች", lessonTitle: "የክፍሉ ርዕስ",
-content: "የትምህርት ይዘት", addLesson: "ክፍል ጨምር",
+lessons: "የትምህርት ክፍሎች", lessonTitle: "የአማርኛ ክፍል ርዕስ",
+lessonTitleEn: "የእንግሊዝኛ ክፍል ርዕስ", lessonTitleOm: "የአፋን ኦሮሞ ክፍል ርዕስ",
+content: "የአማርኛ የትምህርት ይዘት",
+contentEn: "የእንግሊዝኛ የትምህርት ይዘት",
+contentOm: "የአፋን ኦሮሞ የትምህርት ይዘት",
+addLesson: "ክፍል ጨምር",
 noLessons: "ምንም የትምህርት ክፍል የለም።",
 questions: "የፈተና ጥያቄዎች", addQuestion: "ጥያቄ ጨምር",
 question: "የፈተና ጥያቄ", questionEn: "የእንግሊዝኛ ጥያቄ",
@@ -62,7 +66,10 @@ titleOm: "Afaan Oromo Course Title", descriptionOm: "Afaan Oromo Course Descript
 save: "Save", update: "Update", edit: "Edit", delete: "Remove",
 archive: "Archive Course", cancel: "Cancel", open: "Open", back: "Back",
 loading: "Loading...", empty: "No courses found.", lessons: "Lessons",
-lessonTitle: "Lesson Title", content: "Lesson Content", addLesson: "Add Lesson",
+lessonTitle: "Amharic Lesson Title", lessonTitleEn: "English Lesson Title",
+lessonTitleOm: "Afaan Oromo Lesson Title",
+content: "Amharic Lesson Content", contentEn: "English Lesson Content",
+contentOm: "Afaan Oromo Lesson Content", addLesson: "Add Lesson",
 noLessons: "No lessons available.", questions: "Exam Questions",
 addQuestion: "Add Question", question: "Amharic Question",
 questionEn: "English Question", questionOm: "Afaan Oromo Question",
@@ -93,8 +100,12 @@ titleOm: "Mata duree Afaan Oromoo", descriptionOm: "Ibsa Afaan Oromoo",
 save: "Olkaa'i", update: "Fooyyessi", edit: "Fooyyessi", delete: "Haqi",
 archive: "Kuusaa keessa kaa'i", cancel: "Dhiisi", open: "Bani", back: "Deebi'i",
 loading: "Fe'amaa jira...", empty: "Barnoonni hin argamne.",
-lessons: "Kutaalee barnootaa", lessonTitle: "Mata duree kutaa",
-content: "Qabiyyee barnootaa", addLesson: "Kutaa dabali",
+lessons: "Kutaalee barnootaa", lessonTitle: "Mata duree kutaa Afaan Amaaraa",
+lessonTitleEn: "Mata duree kutaa Afaan Ingilizii",
+lessonTitleOm: "Mata duree kutaa Afaan Oromoo",
+content: "Qabiyyee barnootaa Afaan Amaaraa",
+contentEn: "Qabiyyee barnootaa Afaan Ingilizii",
+contentOm: "Qabiyyee barnootaa Afaan Oromoo", addLesson: "Kutaa dabali",
 noLessons: "Kutaan barnootaa hin jiru.", questions: "Gaaffilee qormaataa",
 addQuestion: "Gaaffii dabali", question: "Gaaffii Afaan Amaaraa",
 questionEn: "Gaaffii Afaan Ingilizii", questionOm: "Gaaffii Afaan Oromoo",
@@ -130,6 +141,18 @@ if (!course) return "";
 if (language === "en") return course.descriptionEn || course.description || "";
 if (language === "om") return course.descriptionOm || course.description || "";
 return course.description || "";
+}
+
+function getLessonTitle(lesson, language) {
+if (language === "en") return lesson.titleEn || lesson.title || "";
+if (language === "om") return lesson.titleOm || lesson.title || "";
+return lesson.title || "";
+}
+
+function getLessonContent(lesson, language) {
+if (language === "en") return lesson.contentEn || lesson.content || "";
+if (language === "om") return lesson.contentOm || lesson.content || "";
+return lesson.content || "";
 }
 
 function getQuestionText(item, language) {
@@ -228,7 +251,11 @@ const [passingScore, setPassingScore] = useState("70");
 const [editingCourse, setEditingCourse] = useState(null);
 
 const [lessonTitle, setLessonTitle] = useState("");
+const [lessonTitleEn, setLessonTitleEn] = useState("");
+const [lessonTitleOm, setLessonTitleOm] = useState("");
 const [lessonContent, setLessonContent] = useState("");
+const [lessonContentEn, setLessonContentEn] = useState("");
+const [lessonContentOm, setLessonContentOm] = useState("");
 
 const [questionText, setQuestionText] = useState("");
 const [questionTextEn, setQuestionTextEn] = useState("");
@@ -399,16 +426,26 @@ setExamSaving(false);
 async function addLesson(event) {
 event.preventDefault();
 if (!admin || !user || !selected) { setMessage(t.adminOnly); return; }
-if (!lessonTitle.trim() || !lessonContent.trim()) { setMessage(t.required); return; }
+if (
+!lessonTitle.trim() || !lessonTitleEn.trim() || !lessonTitleOm.trim() ||
+!lessonContent.trim() || !lessonContentEn.trim() || !lessonContentOm.trim()
+) { setMessage(t.required); return; }
 setSaving(true); setMessage("");
 try {
 const data = {
-title: lessonTitle.trim(), content: lessonContent.trim(),
+title: lessonTitle.trim(),
+titleEn: lessonTitleEn.trim(),
+titleOm: lessonTitleOm.trim(),
+content: lessonContent.trim(),
+contentEn: lessonContentEn.trim(),
+contentOm: lessonContentOm.trim(),
 createdBy: user.uid, createdAt: serverTimestamp()
 };
 const result = await addDoc(collection(db, "courses", selected.id, "lessons"), data);
 setLessons(previous => [...previous, { id: result.id, ...data }]);
-setLessonTitle(""); setLessonContent(""); setMessage(t.added);
+setLessonTitle(""); setLessonTitleEn(""); setLessonTitleOm("");
+setLessonContent(""); setLessonContentEn(""); setLessonContentOm("");
+setMessage(t.added);
 } catch (error) {
 setMessage(error.message || t.error);
 } finally {
@@ -665,8 +702,8 @@ borderRadius: "6px", overflowWrap: "anywhere"
 {lessons.length === 0 && <p>{t.noLessons}</p>}
 {lessons.map(lesson => (
 <article key={lesson.id} style={sectionStyle}>
-<h4>{lesson.title}</h4>
-<p style={{ whiteSpace: "pre-wrap" }}>{lesson.content}</p>
+<h4>{getLessonTitle(lesson, language)}</h4>
+<p style={{ whiteSpace: "pre-wrap" }}>{getLessonContent(lesson, language)}</p>
 {!admin && (
 <label style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "12px" }}>
 <input type="checkbox" checked={completedLessonIds.includes(lesson.id)}
@@ -696,8 +733,14 @@ setMessage(progressError.message || t.error);
 {admin && (
 <form onSubmit={addLesson} style={sectionStyle}>
 <h3>{t.addLesson}</h3>
+<h4>{t.lessonTitle}</h4>
 <input style={fieldStyle} value={lessonTitle} onChange={e => setLessonTitle(e.target.value)} placeholder={t.lessonTitle} required />
+<input style={fieldStyle} value={lessonTitleEn} onChange={e => setLessonTitleEn(e.target.value)} placeholder={t.lessonTitleEn} required />
+<input style={fieldStyle} value={lessonTitleOm} onChange={e => setLessonTitleOm(e.target.value)} placeholder={t.lessonTitleOm} required />
+<h4>{t.content}</h4>
 <textarea style={fieldStyle} value={lessonContent} onChange={e => setLessonContent(e.target.value)} placeholder={t.content} rows={6} required />
+<textarea style={fieldStyle} value={lessonContentEn} onChange={e => setLessonContentEn(e.target.value)} placeholder={t.contentEn} rows={6} required />
+<textarea style={fieldStyle} value={lessonContentOm} onChange={e => setLessonContentOm(e.target.value)} placeholder={t.contentOm} rows={6} required />
 <button type="submit" disabled={saving}>{saving ? t.loading : t.save}</button>
 </form>
 )}
