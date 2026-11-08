@@ -16,6 +16,11 @@ const translations = {
     courses: "ትምህርቶች",
     results: "የፈተና ውጤቶች",
     certificates: "ሰርተፊኬቶች",
+    certificateReport: "የሰርተፍኬት ሪፖርት",
+    certificateCode: "የሰርተፍኬት ቁጥር",
+    issuedDate: "የተሰጠበት ቀን",
+    noCertificates: "እስካሁን ሰርተፍኬት አልተሰጠም።",
+    downloadCertificates: "⬇ የሰርተፍኬት ሪፖርት አውርድ",
     loading: "መረጃ በመጫን ላይ...",
     refresh: "እንደገና ጫን",
     open: "ክፈት",
@@ -44,6 +49,11 @@ const translations = {
     courses: "Courses",
     results: "Exam Results",
     certificates: "Certificates",
+    certificateReport: "Certificate Report",
+    certificateCode: "Certificate number",
+    issuedDate: "Issue date",
+    noCertificates: "No certificates have been issued yet.",
+    downloadCertificates: "⬇ Download Certificate Report",
     loading: "Loading data...",
     refresh: "Refresh",
     open: "Open",
@@ -72,6 +82,11 @@ const translations = {
     courses: "Barnoota",
     results: "Bu'aa Qormaataa",
     certificates: "Ragaa",
+    certificateReport: "Gabaasa Ragaa",
+    certificateCode: "Lakkoofsa ragaa",
+    issuedDate: "Guyyaa kenname",
+    noCertificates: "Ammaaf ragaan hin kennamne.",
+    downloadCertificates: "⬇ Gabaasa ragaa buusi",
     loading: "Odeeffannoon fe'amaa jira...",
     refresh: "Irra deebi'i fe'i",
     open: "Bani",
@@ -157,6 +172,7 @@ export default function Admin({
   });
 
   const [examResults, setExamResults] = useState([]);
+  const [certificates, setCertificates] = useState([]);
   const [learningProgress, setLearningProgress] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -209,7 +225,24 @@ export default function Admin({
         console.warn("Learning progress load error:", progressError);
       }
 
-      // 3. Load dashboard counts.
+      // 3. Load issued certificates.
+      const certificateSnapshot = await getDocs(
+        collection(db, "certificates")
+      );
+
+      const rawCertificates = certificateSnapshot.docs.map(item => ({
+        id: item.id,
+        ...item.data()
+      }));
+
+      rawCertificates.sort((a, b) => {
+        return (
+          (asDate(b.issuedAt || b.createdAt)?.getTime() || 0) -
+          (asDate(a.issuedAt || a.createdAt)?.getTime() || 0)
+        );
+      });
+
+      // 4. Load dashboard counts.
       const collections = [
         ["students", "users"],
         ["courses", "courses"],
@@ -237,11 +270,12 @@ export default function Admin({
         results: resultSnapshot.size
       }));
 
-      // 4. Load student names.
+      // 5. Load student names.
       const userIds = [
         ...new Set([
           ...rawResults.map(item => item.userId),
-          ...rawProgress.map(item => item.userId)
+          ...rawProgress.map(item => item.userId),
+          ...rawCertificates.map(item => item.userId)
         ].filter(Boolean))
       ];
 
@@ -278,11 +312,19 @@ export default function Admin({
         );
       }
 
-      // 5. Attach student names to exam results.
+      // 6. Attach student names to exam results and certificates.
       setExamResults(
         rawResults.map(item => ({
           ...item,
           studentName: getStudentName(item.userId)
+        }))
+      );
+
+      setCertificates(
+        rawCertificates.map(item => ({
+          ...item,
+          studentName:
+            item.userName || getStudentName(item.userId)
         }))
       );
 
@@ -493,6 +535,63 @@ export default function Admin({
                 <p>
                   <strong>{t.date}:</strong>{" "}
                   {formatDate(item.createdAt)}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* CERTIFICATE REPORT */}
+      <div className="admin-results-section">
+        <h3>{t.certificateReport}</h3>
+
+        {!loading && certificates.length > 0 && (
+          <button
+            type="button"
+            onClick={() =>
+              downloadCsv(
+                "digital-learning-certificates.csv",
+                [
+                  ["Student", "Student ID", "Course", "Certificate number", "Issue date"],
+                  ...certificates.map(item => [
+                    item.studentName || item.userId,
+                    item.userId,
+                    item.courseTitle || item.courseId || "—",
+                    item.certificateCode || item.id,
+                    formatDate(item.issuedAt || item.createdAt)
+                  ])
+                ]
+              )
+            }
+          >
+            {t.downloadCertificates}
+          </button>
+        )}
+
+        {loading ? (
+          <p>{t.loading}</p>
+        ) : certificates.length === 0 ? (
+          <p>{t.noCertificates}</p>
+        ) : (
+          <div className="admin-results-list">
+            {certificates.map(item => (
+              <article
+                key={item.id}
+                className="admin-stat-card admin-result-card"
+              >
+                <h4>{item.studentName || t.unknownStudent}</h4>
+                <p>
+                  <strong>{t.course}:</strong>{" "}
+                  {item.courseTitle || item.courseId || "—"}
+                </p>
+                <p>
+                  <strong>{t.certificateCode}:</strong>{" "}
+                  {item.certificateCode || item.id}
+                </p>
+                <p>
+                  <strong>{t.issuedDate}:</strong>{" "}
+                  {formatDate(item.issuedAt || item.createdAt)}
                 </p>
               </article>
             ))}
