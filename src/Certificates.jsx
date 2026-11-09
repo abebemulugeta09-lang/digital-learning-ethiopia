@@ -1,11 +1,5 @@
-
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  query,
-  where
-} from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "./firebase";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -14,97 +8,66 @@ const translations = {
     title: "የእኔ ሰርተፊኬቶች",
     loading: "በመጫን ላይ...",
     empty: "እስካሁን ሰርተፊኬት አላገኘህም።",
-    student: "የተማሪ ስም",
-    course: "የትምህርት ስም",
-    code: "የሰርተፊኬት ቁጥር",
-    date: "የተሰጠበት ቀን",
     print: "ሰርተፊኬቱን አትም",
-    error: "ሰርተፊኬቶችን መጫን አልተቻለም።",
-    issued: "የተሳካ ምስክር ወረቀት",
-    organization: "Digital Learning Ethiopia",
-    scan: "የሰርተፊኬት መለያ QR ኮድ"
+    error: "ሰርተፊኬቶችን መጫን አልተቻለም።"
   },
   en: {
     title: "My Certificates",
     loading: "Loading...",
     empty: "You have not earned a certificate yet.",
-    student: "Student name",
-    course: "Course title",
-    code: "Certificate number",
-    date: "Issue date",
     print: "Print certificate",
-    error: "Could not load certificates.",
-    issued: "Certificate of Achievement",
-    organization: "Digital Learning Ethiopia",
-    scan: "Certificate QR identifier"
+    error: "Could not load certificates."
   },
   om: {
     title: "Ragaa Koo",
     loading: "Fe'amaa jira...",
     empty: "Ammaaf ragaa hin arganne.",
-    student: "Maqaa barataa",
-    course: "Maqaa barnootaa",
-    code: "Lakkoofsa ragaa",
-    date: "Guyyaa kenname",
     print: "Ragaa maxxansi",
-    error: "Ragaa fe'uun hin danda'amne.",
-    issued: "Ragaa Milkaa'inaa",
-    organization: "Digital Learning Ethiopia",
-    scan: "Koodii QR ragaa"
+    error: "Ragaa fe'uun hin danda'amne."
   }
 };
+
+function getDate(value, language = "en") {
+  if (!value) return "—";
+  let date;
+  if (typeof value === "string" || typeof value === "number") date = new Date(value);
+  else if (typeof value.toDate === "function") date = value.toDate();
+  else if (typeof value.seconds === "number") date = new Date(value.seconds * 1000);
+  else if (typeof value._seconds === "number") date = new Date(value._seconds * 1000);
+  if (!date || Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString(language === "am" ? "am-ET" : language === "om" ? "om-ET" : "en", {
+    day: "2-digit", month: "long", year: "numeric"
+  });
+}
 
 export default function Certificates({ user, language = "am" }) {
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const t = translations[language] || translations.am;
 
   useEffect(() => {
     let active = true;
-
     async function loadCertificates() {
       if (!user?.uid) {
         setCertificates([]);
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
         setError("");
-
-        const q = query(
-          collection(db, "certificates"),
-          where("userId", "==", user.uid)
-        );
-
+        const q = query(collection(db, "certificates"), where("userId", "==", user.uid));
         const snapshot = await getDocs(q);
-
-        const items = snapshot.docs.map(item => ({
-          id: item.id,
-          ...item.data()
-        }));
-
-        function getTimestamp(value) {
+        const items = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+        const millis = value => {
           if (!value) return 0;
-          if (typeof value === "string" || typeof value === "number") {
-            const parsed = new Date(value).getTime();
-            return Number.isFinite(parsed) ? parsed : 0;
-          }
+          if (typeof value === "string" || typeof value === "number") return new Date(value).getTime() || 0;
           if (typeof value.toMillis === "function") return value.toMillis();
           if (typeof value.seconds === "number") return value.seconds * 1000;
-          if (typeof value._seconds === "number") return value._seconds * 1000;
           return 0;
-        }
-
-        items.sort((a, b) => {
-          const dateA = getTimestamp(a.issuedAt || a.createdAt);
-          const dateB = getTimestamp(b.issuedAt || b.createdAt);
-          return dateB - dateA;
-        });
-
+        };
+        items.sort((a, b) => millis(b.issuedAt || b.createdAt) - millis(a.issuedAt || a.createdAt));
         if (active) setCertificates(items);
       } catch (err) {
         console.error("Certificate loading error:", err);
@@ -113,101 +76,50 @@ export default function Certificates({ user, language = "am" }) {
         if (active) setLoading(false);
       }
     }
-
     loadCertificates();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [user?.uid, language]);
-
-  function formatDate(certificate) {
-    const timestamp = certificate.issuedAt || certificate.createdAt;
-    if (!timestamp) return "—";
-
-    let date;
-    if (typeof timestamp === "string" || typeof timestamp === "number") {
-      date = new Date(timestamp);
-    } else if (typeof timestamp.toDate === "function") {
-      date = timestamp.toDate();
-    } else if (typeof timestamp.seconds === "number") {
-      date = new Date(timestamp.seconds * 1000);
-    } else if (typeof timestamp._seconds === "number") {
-      date = new Date(timestamp._seconds * 1000);
-    } else {
-      return "—";
-    }
-
-    if (Number.isNaN(date.getTime())) return "—";
-
-    return date.toLocaleDateString(
-      language === "am" ? "am-ET" :
-      language === "om" ? "om-ET" : "en"
-    );
-  }
 
   return (
     <section className="certificates-page">
-      <h2>{t.title}</h2>
-
+      <h2 className="certificates-heading">{t.title}</h2>
       {loading && <p>{t.loading}</p>}
       {error && <p role="alert">{error}</p>}
-
-      {!loading && !error && certificates.length === 0 && (
-        <p>{t.empty}</p>
-      )}
+      {!loading && !error && certificates.length === 0 && <p>{t.empty}</p>}
 
       <div className="certificate-list">
-        {certificates.map(certificate => (
-          <article
-            className="certificate-card"
-            key={certificate.id}
-          >
-            <div className="certificate-content">
-              <h2>{t.organization}</h2>
-              <h3>{t.issued}</h3>
-
-              <p>
-                {t.student}:{" "}
-                <strong>{certificate.userName || user?.displayName || "—"}</strong>
-              </p>
-
-              <p>
-                {t.course}:{" "}
-                <strong>{certificate.courseTitle || "—"}</strong>
-              </p>
-
-              <p>
-                {t.code}:{" "}
-                <strong>
-                  {certificate.certificateCode || certificate.id}
-                </strong>
-              </p>
-
-              <p>
-                {t.date}: {formatDate(certificate)}
-              </p>
-
-              <div className="certificate-qr" style={{ margin: "24px auto", textAlign: "center" }}>
-                <p>{t.scan}</p>
-                <QRCodeSVG
-                  value={`${window.location.origin}/?verify=${encodeURIComponent(certificate.certificateCode || certificate.id)}`}
-                  size={160}
-                  level="H"
-                  includeMargin={true}
-                  title={t.scan}
-                />
+        {certificates.map(certificate => {
+          const code = certificate.certificateCode || certificate.id;
+          const verifyUrl = `${window.location.origin}/?verify=${encodeURIComponent(code)}`;
+          return (
+            <article className="certificate-card" key={certificate.id}>
+              <div className="certificate-content">
+                <div className="certificate-brand">DIGITAL LEARNING ETHIOPIA</div>
+                <div className="certificate-rule" />
+                <p className="certificate-eyebrow">CERTIFICATE OF COMPLETION</p>
+                <p className="certificate-presented">THIS CERTIFICATE IS PROUDLY PRESENTED TO</p>
+                <h1 className="certificate-student">{certificate.userName || user?.displayName || "Learner"}</h1>
+                <p className="certificate-for">FOR SUCCESSFULLY COMPLETING</p>
+                <h2 className="certificate-course">{certificate.courseTitle || "Course"}</h2>
+                <p className="certificate-platform">COURSE ON THE DIGITAL LEARNING ETHIOPIA PLATFORM</p>
+                <div className="certificate-footer">
+                  <div className="certificate-details">
+                    <p><strong>DATE:</strong> {getDate(certificate.issuedAt || certificate.createdAt, "en")}</p>
+                    <p><strong>UNIQUE CERTIFICATE ID:</strong> {code}</p>
+                  </div>
+                  <div className="certificate-qr">
+                    <QRCodeSVG value={verifyUrl} size={112} level="H" includeMargin title="Scan to verify this certificate" />
+                    <span>SCAN TO VERIFY</span>
+                  </div>
+                </div>
+                <div className="certificate-rule certificate-bottom-rule" />
               </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => window.print()}
-            >
-              {t.print}
-            </button>
-          </article>
-        ))}
+              <button type="button" className="certificate-print-button" onClick={() => window.print()}>
+                {t.print}
+              </button>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
