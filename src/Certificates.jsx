@@ -46,6 +46,27 @@ export default function Certificates({ user, language = "am" }) {
   const [error, setError] = useState("");
   const t = translations[language] || translations.am;
 
+  function printCertificate(event) {
+    const card = event.currentTarget.closest(".certificate-card");
+    if (!card) return;
+
+    document.querySelectorAll(".certificate-card.printing").forEach(item => {
+      item.classList.remove("printing");
+    });
+
+    card.classList.add("printing");
+    document.body.classList.add("print-single-certificate");
+
+    const cleanup = () => {
+      card.classList.remove("printing");
+      document.body.classList.remove("print-single-certificate");
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    window.addEventListener("afterprint", cleanup);
+    window.print();
+  }
+
   useEffect(() => {
     let active = true;
     async function loadCertificates() {
@@ -114,7 +135,7 @@ export default function Certificates({ user, language = "am" }) {
                 </div>
                 <div className="certificate-rule certificate-bottom-rule" />
               </div>
-              <button type="button" className="certificate-print-button" onClick={() => window.print()}>
+              <button type="button" className="certificate-print-button" onClick={printCertificate}>
                 {t.print}
               </button>
             </article>
