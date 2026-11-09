@@ -370,3 +370,15 @@ input[type="radio"] {
   .certificate-content { min-height: 175mm; padding: 18mm 22mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .certificate-card:last-child { page-break-after: auto; break-after: auto; }
 }
+
+
+/* Print only the certificate whose own print button was selected. */
+@media print {
+  body.print-single-certificate .certificate-card:not(.printing) {
+    display: none !important;
+  }
+
+  body.print-single-certificate .certificate-card.printing {
+    display: block !important;
+  }
+}
